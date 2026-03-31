@@ -1,0 +1,14 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c99
+INCLUDES = -I./header -I. 
+# Library khusus untuk Windows
+LIBS = -lraylib -lopengl32 -lgdi32 -lwinmm -lm
+
+SRCS = Main.c src/About.c src/Guide.c src/Lift.c src/Menu.c src/Simulation.c src/Transformasi.c
+TARGET = simulasi_lift.exe
+
+build:
+	$(CC) $(CFLAGS) $(INCLUDES) $(SRCS) -o $(TARGET) $(LIBS)
+
+clean:
+	del $(TARGET)
