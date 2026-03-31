@@ -1,10 +1,16 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99
-INCLUDES = -I./header -I. 
-# Library khusus untuk Windows
+
+# Folder tempat mencari file .h (header) dan file root
+INCLUDES = -I./header -I.
+
+# Library khusus untuk Windows agar Raylib berjalan
 LIBS = -lraylib -lopengl32 -lgdi32 -lwinmm -lm
 
-SRCS = Main.c src/About.c src/Guide.c src/Lift.c src/Menu.c src/Simulation.c src/Transformasi.c
+# Daftar semua file sumber (.c) sesuai struktur folder Anda
+SRCS = Main.c src/About.c src/Camera.c src/Guide.c src/Lift.c src/Menu.c src/Simulation.c src/Transformasi.c
+
+# Nama file aplikasi yang akan jadi (harus .exe untuk Windows)
 TARGET = simulasi_lift.exe
 
 build:
