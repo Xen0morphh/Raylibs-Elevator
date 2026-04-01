@@ -1,4 +1,7 @@
 #include "../header/Menu.h"
+#include "Screen_type.h"
+// Define ScreenState enum if not already in Menu.h
+
 
 // Variabel lokal (hanya bisa diakses di file ini)
 static Texture2D bgMenu;
