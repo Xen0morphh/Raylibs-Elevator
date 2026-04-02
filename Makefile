@@ -18,3 +18,10 @@ build:
 
 clean:
 	del $(TARGET)
+
+# Cara pakai:
+# 1. Simpan file ini sebagai "Makefile.win" di folder proyek Anda.		
+# 2. Jalankan perintah berikut di terminal:
+#    mingw32-make -f Makefile.win
+# 3. Untuk membersihkan file .exe yang dihasilkan, jalankan:
+#    mingw32-make -f Makefile.win clean	

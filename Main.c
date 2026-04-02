@@ -2,17 +2,19 @@
 #include "Screen_type.h"
 #include "header/Menu.h"
 
-int main(void) {
-    // Ukuran layar jendela aplikasi
-    const int screenWidth = 800;
-    const int screenHeight = 600;
 
-    InitWindow(screenWidth, screenHeight, "Elevator Simulation Project");
+int main(void) {
+    // ============================================
+    // INI BAGIAN UNTUK BIKIN FULL SCREEN
+    // ============================================
+    // Angka 0, 0 akan menyuruh Raylib mendeteksi resolusi monitor Anda secara otomatis
+    InitWindow(0, 0, "Elevator Simulation Project");
+    ToggleFullscreen(); // Fungsi ajaib untuk menghilangkan border Windows
 
     // Tentukan layar pertama saat aplikasi dibuka
     ScreenState currentScreen = SCREEN_MENU;
 
-    // Panggil inisialisasi modul (Load aset)
+    // Panggil inisialisasi modul (Load aset langsung dipanggil di sini)
     InitMenuScreen();
     // Nanti tambahkan: InitSimulationScreen(), InitGuideScreen(), dll.
 
@@ -26,11 +28,9 @@ int main(void) {
         // ============================================
         switch (currentScreen) {
             case SCREEN_MENU:
-                // Menu akan mengembalikan state baru jika ada tombol yang diklik
                 currentScreen = UpdateMenuScreen();
                 break;
             case SCREEN_SIMULATION:
-                // Untuk sementara, tekan BACKSPACE untuk kembali ke Menu
                 if (IsKeyPressed(KEY_BACKSPACE)) currentScreen = SCREEN_MENU;
                 break;
             case SCREEN_GUIDE:
@@ -40,7 +40,6 @@ int main(void) {
                 if (IsKeyPressed(KEY_BACKSPACE)) currentScreen = SCREEN_MENU;
                 break;
             case SCREEN_EXIT:
-                // Jika tombol exit ditekan, paksakan keluar dari while loop
                 goto EXIT_GAME; 
         }
 
@@ -75,7 +74,7 @@ int main(void) {
 EXIT_GAME:
     
     // ============================================
-    // 3. UNLOAD (Bersihkan RAM)
+    // 3. UNLOAD (Free Memory, dll.)
     // ============================================
     UnloadMenuScreen();
     // Nanti tambahkan: UnloadSimulationScreen(), dll.
