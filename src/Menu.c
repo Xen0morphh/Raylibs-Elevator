@@ -89,6 +89,18 @@ void DrawMenuScreen(void) {
         int textWidth = MeasureText(labels[i], 20);
         DrawText(labels[i], btns[i]->x + (btns[i]->width - textWidth) / 2, btns[i]->y + 15, 20, textColor);
     }
+    // Credit Footer di Bawah Layar
+    const char* footerText = "Version 1.0.0   |   Created by Salman";
+    int fontSize = 18;
+    int footerWidth = MeasureText(footerText, fontSize);
+    int posX = (sw - footerWidth) / 2;
+    int posY = sh - 30;
+
+    Color textUI = (Color){ 200, 200, 200, 220 }; 
+    Color shadowUI = (Color){ 0, 0, 0, 150 };
+
+    DrawText(footerText, posX + 2, posY + 2, fontSize, shadowUI);
+    DrawText(footerText, posX, posY, fontSize, textUI);
 }
 
 void UnloadMenuScreen(void) {
