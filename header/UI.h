@@ -1,5 +1,6 @@
 #ifndef UI_H
 #define UI_H
+#include "Lift.h"
 
 // Fungsi untuk load gambar global
 void InitUI(void);
@@ -9,5 +10,8 @@ void DrawMainBackground(void);
 
 // Fungsi untuk membuang gambar dari RAM
 void UnloadUI(void);
+
+// Fungsi untuk menggambar elemen UI di layar simulasi (status bar, garis tengah, dll)
+void DrawSimulationUI(Elevator* lift);
 
 #endif

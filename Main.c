@@ -2,6 +2,7 @@
 #include "Screen_type.h"
 #include "header/Menu.h"
 #include "header/UI.h"
+#include "header/Simulation.h"
 
 int main(void) {
     // ============================================
@@ -53,9 +54,8 @@ int main(void) {
                 DrawMenuScreen();
                 break;
             case SCREEN_SIMULATION:
-                DrawMainBackground();
-                DrawText("--- LAYAR SIMULASI ---", 250, 250, 30, DARKGRAY);
-                DrawText("Tekan BACKSPACE untuk kembali ke Menu", 200, 300, 20, GRAY);
+                // Panggil fungsi gambar untuk layar simulasi (termasuk background, building view, mech view, dan UI)
+                DrawSimulationScreen();
                 break;
             case SCREEN_GUIDE:
                 DrawMainBackground();
