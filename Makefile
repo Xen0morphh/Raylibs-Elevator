@@ -20,7 +20,7 @@ clean:
 	rm -f $(TARGET)
 
 # Cara pakai di Linux/Mac:
-# 1. Buka terminal
-# 2. Ketik: make
-# 3. Jalankan aplikasi: ./simulasi_lift
+# 1. Buka terminal 
+# 2. Ketik: mingw32-make -f Makefile.win
+# 3. Jalankan aplikasi: .exe
 # 4. Hapus aplikasi: make clean

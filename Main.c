@@ -1,7 +1,7 @@
 #include "raylib.h"
 #include "Screen_type.h"
 #include "header/Menu.h"
-
+#include "header/UI.h"
 
 int main(void) {
     // ============================================
@@ -16,8 +16,7 @@ int main(void) {
 
     // Panggil inisialisasi modul (Load aset langsung dipanggil di sini)
     InitMenuScreen();
-    // Nanti tambahkan: InitSimulationScreen(), InitGuideScreen(), dll.
-
+    InitUI();
     SetTargetFPS(60);
 
     // GAME LOOP UTAMA
@@ -54,14 +53,17 @@ int main(void) {
                 DrawMenuScreen();
                 break;
             case SCREEN_SIMULATION:
+                DrawMainBackground();
                 DrawText("--- LAYAR SIMULASI ---", 250, 250, 30, DARKGRAY);
                 DrawText("Tekan BACKSPACE untuk kembali ke Menu", 200, 300, 20, GRAY);
                 break;
             case SCREEN_GUIDE:
+                DrawMainBackground();
                 DrawText("--- LAYAR PANDUAN ---", 250, 250, 30, DARKBLUE);
                 DrawText("Tekan BACKSPACE untuk kembali ke Menu", 200, 300, 20, GRAY);
                 break;
             case SCREEN_ABOUT:
+                DrawMainBackground();
                 DrawText("--- LAYAR TENTANG ---", 250, 250, 30, DARKGREEN);
                 DrawText("Tekan BACKSPACE untuk kembali ke Menu", 200, 300, 20, GRAY);
                 break;
@@ -73,11 +75,7 @@ int main(void) {
 
 EXIT_GAME:
     
-    // ============================================
-    // 3. UNLOAD (Free Memory, dll.)
-    // ============================================
     UnloadMenuScreen();
-    // Nanti tambahkan: UnloadSimulationScreen(), dll.
 
     CloseWindow();
     return 0;
