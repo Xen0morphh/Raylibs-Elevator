@@ -1,9 +1,9 @@
 #include "../header/BuildingView.h"
 #include "../header/Lift.h"
 #include "../header/Transformasi.h"
+#include "../header/Person.h"
 
-
-void DrawBuildingView(Elevator* lift) {
+void DrawBuildingView(Elevator* lift, Person* p) {
     float sw = GetScreenWidth();
     float sh = GetScreenHeight();
     float leftWidth = sw * 0.55f;
@@ -43,7 +43,12 @@ void DrawBuildingView(Elevator* lift) {
     // GAMBAR MOBIL LIFT & PINTU
     // ==========================================
     DrawRectangle(carX, carY, carWidth, carHeight, (Color){40, 40, 40, 255}); 
-
+    
+    // Gambar orang di dalam lift hanya jika dia benar-benar berada di area lift
+    if (p->state != PERSON_GONE && p->position.x < leftWidth) {
+        DrawPerson(p);
+    }   
+    
     float doorWidth = (carWidth / 2.0f) * (1.0f - lift->doorOpenness);
     if (doorWidth > 0.0f) {
         DrawRectangle(carX, carY, doorWidth, carHeight, (Color){20, 60, 100, 255});

@@ -8,9 +8,7 @@ INCLUDES = -I./header -I.
 LIBS = -lraylib -lopengl32 -lgdi32 -lwinmm -lm
 
 # Daftar semua file .c Anda (Sudah ditambahkan BuildingView, MechView, dan UI)
-SRCS = Main.c src/About.c src/BuildingView.c src/Camera.c src/Guide.c src/Lift.c src/MechView.c src/Menu.c src/Simulation.c src/Transformasi.c src/UI.c
-
-# Nama aplikasi output (tambahkan .exe untuk Windows)
+SRCS = Main.c src/About.c src/BuildingView.c src/Camera.c src/Guide.c src/Lift.c src/MechView.c src/Menu.c src/Simulation.c src/Transformasi.c src/UI.c src/Person.c
 TARGET = simulasi_lift.exe
 
 build:
@@ -18,3 +16,9 @@ build:
 
 clean:
 	del $(TARGET)
+
+# Cara pakai di Windows:
+# 1. Buka terminal 
+# 2. Ketik: mingw32-make -f Makefile.win
+# 3. Jalankan aplikasi: .exe
+# 4. Hapus aplikasi: make clean

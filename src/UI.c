@@ -2,8 +2,44 @@
 #include "raylib.h"
 #include "../header/Lift.h"
 #include "../header/Transformasi.h"
+#include "../header/Person.h"
 
 static Texture2D bgMain;
+
+bool DrawButtonInteractive(Rectangle rect, const char* text, Color baseColor, bool enabled) {
+    Vector2 mousePoint = GetMousePosition();
+    bool clicked = false;
+    Color displayColor = baseColor;
+    int offset = 0;
+
+    if (!enabled) {
+        displayColor = (Color){ 80, 80, 80, 255 }; // Warna abu-abu jika mati
+    } else {
+        if (CheckCollisionPointRec(mousePoint, rect)) {
+            displayColor = ColorBrightness(baseColor, 0.2f); // Terang saat hover
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+                offset = 2; // Efek masuk ke dalam
+                displayColor = ColorBrightness(baseColor, -0.3f); // Gelap saat ditekan
+            }
+            if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) clicked = true;
+        }
+    }
+
+    // Gambar Bayangan/Border Bawah (Efek 3D)
+    if (enabled) DrawRectangleRounded((Rectangle){ rect.x, rect.y + 2, rect.width, rect.height }, 0.3f, 5, DARKGRAY);
+    
+    // Gambar Tombol Utama
+    DrawRectangleRounded((Rectangle){ rect.x, rect.y + offset, rect.width, rect.height }, 0.3f, 5, displayColor);
+    DrawRectangleRoundedLines((Rectangle){ rect.x, rect.y + offset, rect.width, rect.height }, 0.3f, 5, enabled ? SKYBLUE : GRAY);
+    
+    // Gambar Teks (Ikut offset saat ditekan)
+    int fontSize = 12;
+    int textX = rect.x + (rect.width - MeasureText(text, fontSize)) / 2;
+    int textY = rect.y + (rect.height - fontSize) / 2 + offset;
+    DrawText(text, textX, textY, fontSize, enabled ? WHITE : LIGHTGRAY);
+
+    return (enabled && clicked);
+}
 
 void InitUI(void) {
     bgMain = LoadTexture("assets/Bg_Main.png");
@@ -42,16 +78,15 @@ void UnloadUI(void) {
     UnloadTexture(bgMain);
 }
 
-void DrawSimulationUI(Elevator* lift) {
+void DrawSimulationUI(Elevator* lift, Person* p) {
     float sw = GetScreenWidth();
     float sh = GetScreenHeight();
-    Vector2 mousePoint = GetMousePosition();
 
-    // 1. Garis Belah Tengah & Status Bar
+    // Garis Belah Tengah & Status Bar
     DrawLineBresenham(sw * 0.55f, 0, sw * 0.55f, sh, (Color){ 50, 100, 150, 255 });
     DrawRectCustom(0, sh - 40, sw, 40, LIGHTGRAY);
 
-    // 2. KOTAK INFO STATUS (Kiri Atas)
+    // KOTAK INFO STATUS (Kiri Atas)
     int infoX = 20;
     int infoY = 20;
     DrawRectangleRounded((Rectangle){infoX, infoY, 120, 80}, 0.2f, 10, (Color){ 10, 20, 35, 230 });
@@ -65,11 +100,11 @@ void DrawSimulationUI(Elevator* lift) {
     else if (lift->state == MOVING_DOWN) { dirText = "TURUN v"; dirColor = RED; }
     DrawText(dirText, infoX + 30, infoY + 55, 15, dirColor);
 
-    // 3. PANEL KONTROL IN-CAR (Kiri Bawah)
+    // PANEL KONTROL IN-CAR (Kiri Bawah)
     int panelX = 20; 
     int panelY = sh - 350; 
-    DrawRectangleRounded((Rectangle){panelX, panelY, 140, 280}, 0.2f, 10, (Color){ 10, 20, 35, 230 });
-    DrawRectangleRoundedLines((Rectangle){panelX, panelY, 140, 280}, 0.2f, 10, SKYBLUE);
+    DrawRectangleRounded((Rectangle){panelX, panelY, 140, 240}, 0.2f, 10, (Color){ 10, 20, 35, 230 });
+    DrawRectangleRoundedLines((Rectangle){panelX, panelY, 140, 240}, 0.2f, 10, SKYBLUE);
     DrawText("IN-CAR", panelX + 45, panelY + 15, 15, SKYBLUE);
 
     // ==========================================
@@ -78,66 +113,55 @@ void DrawSimulationUI(Elevator* lift) {
     for (int i = 5; i >= 1; i--) {
         int btnX = panelX + ((i % 2 == 1) ? 35 : 95); 
         int btnY = panelY + 60 + ((5 - i) * 25);
-        Color btnColor = (lift->targetFloor == i) ? BLUE : DARKBLUE; 
+        Rectangle r = { btnX - 18, btnY - 18, 36, 36 };
         
-        if (CheckCollisionPointCircle(mousePoint, (Vector2){btnX, btnY}, 18)) {
-            DrawCircleLines(btnX, btnY, 20, WHITE); 
-            
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                // Pastikan lift tidak sedang melaju di tengah jalan
-                if (lift->state != MOVING_UP && lift->state != MOVING_DOWN) {
-                    lift->targetFloor = i; 
-                    
-                    // JIKA PINTU LAGI TERBUKA ATAU PROSES BUKA, PAKSA LANGSUNG TUTUP!
-                    if (lift->state == DOOR_OPEN || lift->state == DOOR_OPENING) {
-                        lift->timer = 0.0f;           // Matikan waktu tunggu 3 detik
-                        lift->state = DOOR_CLOSING;   // Paksa pintu langsung geser tutup
-                    }
-                }
-            }
-        }
+        bool isTarget = (lift->targetFloor == i);
+        // Warna cerah jika lantai dituju, gelap jika tidak
+        Color btnColor = isTarget ? (Color){0, 160, 255, 255} : (Color){20, 40, 60, 255}; 
+        bool canPress = (lift->state == IDLE || lift->state == DOOR_OPEN);
 
-        DrawCircle(btnX, btnY, 18, btnColor);
-        DrawCircleLines(btnX, btnY, 18, SKYBLUE);
-        DrawText(TextFormat("%d", i), btnX - 5, btnY - 8, 18, RAYWHITE);
+        if (DrawButtonInteractive(r, TextFormat("%d", i), btnColor, canPress)) {
+            lift->targetFloor = i;
+            if (lift->state == DOOR_OPEN) { lift->timer = 0; lift->state = DOOR_CLOSING; }
+        }
     }
 
     // ==========================================
     // LOGIKA TOMBOL BUKA / TUTUP PINTU
     // ==========================================
-    Rectangle btnBuka = {panelX + 15, panelY + 220, 50, 35};
-    Rectangle btnTutup = {panelX + 75, panelY + 220, 50, 35};
+    Rectangle btnBuka = {panelX + 15, panelY + 190, 50, 30};
+    Rectangle btnTutup = {panelX + 75, panelY + 190, 50, 30};
     
-    // Tombol BUKA [ ]
-    if (CheckCollisionPointRec(mousePoint, btnBuka)) {
-        DrawRectangleRoundedLines(btnBuka, 0.3f, 5, WHITE);
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            // Bisa dibuka lagi kalau sedang Idle atau setengah menutup
-            if (lift->state == IDLE || lift->state == DOOR_CLOSING) lift->state = DOOR_OPENING;
-            // Kalau sudah kebuka, reset waktu idle kembali ke 3 detik
-            if (lift->state == DOOR_OPEN) lift->timer = 3.0f;
+    // 1. Tombol BUKA (Teks dikosongkan, pakai warna Hijau Gelap)
+    if (DrawButtonInteractive(btnBuka, "", (Color){30, 150, 50, 255}, true)) {
+        if (lift->state == IDLE || lift->state == DOOR_CLOSING) lift->state = DOOR_OPENING;
+        if (lift->state == DOOR_OPEN) lift->timer = 3.0f;
+    }
+    // GAMBAR ICON BUKA (< >) DI ATAS TOMBOL
+    DrawLineEx((Vector2){btnBuka.x + 22, btnBuka.y + 10}, (Vector2){btnBuka.x + 15, btnBuka.y + 15}, 2, WHITE); // Panah kiri atas
+    DrawLineEx((Vector2){btnBuka.x + 15, btnBuka.y + 15}, (Vector2){btnBuka.x + 22, btnBuka.y + 20}, 2, WHITE); // Panah kiri bawah
+    DrawLineEx((Vector2){btnBuka.x + 28, btnBuka.y + 10}, (Vector2){btnBuka.x + 35, btnBuka.y + 15}, 2, WHITE); // Panah kanan atas
+    DrawLineEx((Vector2){btnBuka.x + 35, btnBuka.y + 15}, (Vector2){btnBuka.x + 28, btnBuka.y + 20}, 2, WHITE); // Panah kanan bawah
+
+
+    // 2. Tombol TUTUP (Teks dikosongkan, pakai warna Merah Gelap)
+    if (DrawButtonInteractive(btnTutup, "", (Color){180, 40, 40, 255}, true)) {
+        if (lift->state == DOOR_OPEN || lift->state == DOOR_OPENING) { 
+            lift->timer = 0; 
+            lift->state = DOOR_CLOSING; 
         }
     }
-    
-    // Tombol TUTUP ][
-    if (CheckCollisionPointRec(mousePoint, btnTutup)) {
-        DrawRectangleRoundedLines(btnTutup, 0.3f, 5, WHITE);
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            // Paksa potong waktu tunggu dan langsung tutup
-            if (lift->state == DOOR_OPEN || lift->state == DOOR_OPENING) {
-                lift->timer = 0.0f;
-                lift->state = DOOR_CLOSING;
-            }
-        }
-    }
+    // GAMBAR ICON TUTUP (> <) DI ATAS TOMBOL
+    DrawLineEx((Vector2){btnTutup.x + 15, btnTutup.y + 10}, (Vector2){btnTutup.x + 22, btnTutup.y + 15}, 2, WHITE); // Panah kiri atas
+    DrawLineEx((Vector2){btnTutup.x + 22, btnTutup.y + 15}, (Vector2){btnTutup.x + 15, btnTutup.y + 20}, 2, WHITE); // Panah kiri bawah
+    DrawLineEx((Vector2){btnTutup.x + 35, btnTutup.y + 10}, (Vector2){btnTutup.x + 28, btnTutup.y + 15}, 2, WHITE); // Panah kanan atas
+    DrawLineEx((Vector2){btnTutup.x + 28, btnTutup.y + 15}, (Vector2){btnTutup.x + 35, btnTutup.y + 20}, 2, WHITE);
 
-    // Gambar Visual Tombol Buka/Tutup
-    DrawRectangleRoundedLines(btnBuka, 0.3f, 5, GREEN);
-    DrawText("[ ]", btnBuka.x + 18, btnBuka.y + 10, 15, GREEN);
-    DrawRectangleRoundedLines(btnTutup, 0.3f, 5, RED);
-    DrawText("][", btnTutup.x + 18, btnTutup.y + 10, 15, RED);
 
-    // 4. TEKS STATUS BAR BAWAH
+    // ==========================================
+    // TEKS STATUS BAR BAWAH
+    // ==========================================
+
     const char* stateStr = "IDLE";
     if (lift->state == MOVING_UP) stateStr = "MOVING_UP";
     else if (lift->state == MOVING_DOWN) stateStr = "MOVING_DOWN";
@@ -159,4 +183,30 @@ void DrawSimulationUI(Elevator* lift) {
     const char* helpText = "ESC: Exit Program  |  BACKSPACE: Kembali ke Menu";
     int textWidth = MeasureText(helpText, 15);
     DrawText(helpText, sw - textWidth - 20, sh - 28, 15, DARKGRAY);
+
+    // ==========================================
+    // TOMBOL KONTROL ORANG (Person Control)
+    // ==========================================   
+    int pControlY = panelY + 250; // Jarak 10 pixel di bawah kotak IN-CAR (240+10)
+
+    DrawText("PERSON CONTROL", panelX + 15, pControlY, 12, GRAY);
+
+    // Syarat pintu terbuka penuh agar tombol bisa dipencet (Aktif/Enable)
+    bool canAction = (lift->doorOpenness >= 0.9f);
+
+    // Tombol P. IN (Biru)
+    Rectangle rIn = { panelX + 2, pControlY + 20, 60, 35 };
+    if (DrawButtonInteractive(rIn, "P. IN", (Color){ 0, 121, 241, 255 }, canAction)) {
+        if (lift->currentFloor == p->startFloor && p->state == PERSON_WAITING) {
+            p->state = PERSON_ENTERING;
+        }
+    }
+
+    // Tombol P. OUT (Orange)
+    Rectangle rOut = { panelX + 68, pControlY + 20, 60, 35 };
+    if (DrawButtonInteractive(rOut, "P. OUT", (Color){ 255, 161, 0, 255 }, canAction)) {
+        if (p->state == PERSON_INSIDE) {
+            p->state = PERSON_EXITING;
+        }
+    }
 }

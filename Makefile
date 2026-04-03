@@ -8,7 +8,7 @@ INCLUDES = -I./header -I.
 LIBS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 # Daftar semua file .c Anda (Sudah termasuk file UI dan View yang baru)
-SRCS = Main.c src/About.c src/BuildingView.c src/Camera.c src/Guide.c src/Lift.c src/MechView.c src/Menu.c src/Simulation.c src/Transformasi.c src/UI.c
+SRCS = SRCS = Main.c src/About.c src/BuildingView.c src/Camera.c src/Guide.c src/Lift.c src/MechView.c src/Menu.c src/Simulation.c src/Transformasi.c src/UI.c src/Person.c
 
 # Nama aplikasi output (TANPA .exe untuk Linux/Mac)
 TARGET = simulasi_lift
@@ -18,9 +18,3 @@ build:
 
 clean:
 	rm -f $(TARGET)
-
-# Cara pakai di Linux/Mac:
-# 1. Buka terminal 
-# 2. Ketik: mingw32-make -f Makefile.win
-# 3. Jalankan aplikasi: .exe
-# 4. Hapus aplikasi: make clean

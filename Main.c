@@ -3,6 +3,10 @@
 #include "header/Menu.h"
 #include "header/UI.h"
 #include "header/Simulation.h"
+#include "header/Person.h"
+
+
+Person testPerson;
 
 int main(void) {
     // ============================================
@@ -18,6 +22,15 @@ int main(void) {
     // Panggil inisialisasi modul (Load aset langsung dipanggil di sini)
     InitMenuScreen();
     InitUI();
+    InitPersonModule();
+    testPerson.startFloor = 1;
+    testPerson.targetFloor = 4;
+    testPerson.position = (Vector2){ 250.0f, 0.0f }; // X menunggu di luar, Y dihitung di Update
+    testPerson.state = PERSON_WAITING;
+    testPerson.framesSpeed = 8; // 8 frame per detik
+    testPerson.currentFrame = 0;
+    testPerson.framesCounter = 0;
+
     SetTargetFPS(60);
 
     // GAME LOOP UTAMA
@@ -55,7 +68,7 @@ int main(void) {
                 break;
             case SCREEN_SIMULATION:
                 // Panggil fungsi gambar untuk layar simulasi (termasuk background, building view, mech view, dan UI)
-                DrawSimulationScreen();
+                DrawSimulationScreen(&testPerson);
                 break;
             case SCREEN_GUIDE:
                 DrawMainBackground();
