@@ -1,31 +1,28 @@
 #include "../header/Lift.h"
 
-// Inisialisasi posisi awal lift
 Elevator myLift = {
     .y = 0.0f, .cw_y = 0.0f, .currentFloor = 1, .targetFloor = 1,
     .state = IDLE, .doorOpenness = 0.0f, .pulleyAngle = 0.0f, .timer = 0.0f
 };
 
-// Fungsi menghitung patokan Y yang akurat dan dinamis
 float GetFloorY(int floor) {
     float sh = GetScreenHeight();
-    float floorHeight = (sh - 150) / 5.0f;
+    // KUNCI PERBAIKAN: (sh - 250) akan menyisakan ruang lega 150px di atap gedung untuk Motor!
+    float floorHeight = (sh - 250) / 5.0f; 
     float floorBaseline = sh - 100 - ((floor - 1) * floorHeight);
     float carHeight = floorHeight - 10;
-    return floorBaseline - carHeight; // Mengembalikan posisi Y (Atap Lift)
+    return floorBaseline - carHeight; 
 }
 
 void UpdateLiftLogic(Elevator* lift) {
-    // 1. Inisialisasi otomatis di frame pertama (karena GetScreenHeight baru aktif)
     if (lift->y == 0.0f) lift->y = GetFloorY(1);
 
-    // 2. Kunci posisi Counterweight (Otomatis terbalik dengan Lift!)
     float topY = GetFloorY(5);
     float bottomY = GetFloorY(1);
     lift->cw_y = topY + bottomY - lift->y; 
 
     float dt = GetFrameTime();   
-    float speed = 250.0f; // Kecepatan lift dipercepat sedikit
+    float speed = 250.0f; 
     float targetY = GetFloorY(lift->targetFloor);
 
     switch (lift->state) {
@@ -34,7 +31,6 @@ void UpdateLiftLogic(Elevator* lift) {
                 lift->state = (lift->y > targetY) ? MOVING_UP : MOVING_DOWN;
             }
             break;
-
         case MOVING_UP:
             lift->y -= speed * dt;       
             lift->pulleyAngle += speed * dt * 0.05f;
@@ -44,7 +40,6 @@ void UpdateLiftLogic(Elevator* lift) {
                 lift->state = DOOR_OPENING;
             }
             break;
-
         case MOVING_DOWN:
             lift->y += speed * dt;       
             lift->pulleyAngle -= speed * dt * 0.05f;
@@ -54,21 +49,18 @@ void UpdateLiftLogic(Elevator* lift) {
                 lift->state = DOOR_OPENING;
             }
             break;
-
         case DOOR_OPENING:
-            lift->doorOpenness += 1.0f * dt; // Buka pintu 1 detik
+            lift->doorOpenness += 1.0f * dt; 
             if (lift->doorOpenness >= 1.0f) {
                 lift->doorOpenness = 1.0f;
                 lift->state = DOOR_OPEN;
-                lift->timer = 3.0f; // Tahan 3 detik
+                lift->timer = 3.0f; 
             }
             break;
-
         case DOOR_OPEN:
             lift->timer -= dt; 
             if (lift->timer <= 0.0f) lift->state = DOOR_CLOSING;
             break;
-
         case DOOR_CLOSING:
             lift->doorOpenness -= 1.0f * dt; 
             if (lift->doorOpenness <= 0.0f) {
