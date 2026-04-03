@@ -90,7 +90,7 @@ void DrawMenuScreen(void) {
         DrawText(labels[i], btns[i]->x + (btns[i]->width - textWidth) / 2, btns[i]->y + 15, 20, textColor);
     }
     // Credit Footer di Bawah Layar
-    const char* footerText = "Version 1.0.0   |   Created by Salman";
+    const char* footerText = "Version 1.0.0   |   Created by Salman Alfarisi";
     int fontSize = 18;
     int footerWidth = MeasureText(footerText, fontSize);
     int posX = (sw - footerWidth) / 2;
