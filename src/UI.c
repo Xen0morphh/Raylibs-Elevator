@@ -3,8 +3,11 @@
 #include "../header/Lift.h"
 #include "../header/Transformasi.h"
 #include "../header/Person.h"
+#include "../header/Camera.h"
 
 static Texture2D bgMain;
+static Texture2D povIcon;
+static bool showPovMenu = false;
 
 bool DrawButtonInteractive(Rectangle rect, const char* text, Color baseColor, bool enabled) {
     Vector2 mousePoint = GetMousePosition();
@@ -43,6 +46,7 @@ bool DrawButtonInteractive(Rectangle rect, const char* text, Color baseColor, bo
 
 void InitUI(void) {
     bgMain = LoadTexture("assets/Bg_Main.png");
+    povIcon = LoadTexture("assets/pov.png");
 }
 void DrawMainBackground(void) {
     // PARALLAX BACKGROUND: Efek gambar bergerak mengikuti posisi mouse
@@ -76,6 +80,7 @@ void DrawMainBackground(void) {
 
 void UnloadUI(void) {
     UnloadTexture(bgMain);
+    UnloadTexture(povIcon);
 }
 
 void DrawSimulationUI(Elevator* lift, Person* p) {
@@ -83,8 +88,8 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
     float sh = GetScreenHeight();
 
     // Garis Belah Tengah & Status Bar
-    DrawLineBresenham(sw * 0.55f, 0, sw * 0.55f, sh, (Color){ 50, 100, 150, 255 });
-    DrawRectCustom(0, sh - 40, sw, 40, LIGHTGRAY);
+    //DrawLineBresenham(sw * 0.55f, 0, sw * 0.55f, sh, (Color){ 50, 100, 150, 255 });
+    //DrawRectCustom(0, sh - 40, sw, 40, LIGHTGRAY);
 
     // KOTAK INFO STATUS (Kiri Atas)
     int infoX = 20;
@@ -207,6 +212,75 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
     if (DrawButtonInteractive(rOut, "P. OUT", (Color){ 255, 161, 0, 255 }, canAction)) {
         if (p->state == PERSON_INSIDE) {
             p->state = PERSON_EXITING;
+        }
+    }
+
+
+    // ==========================================
+    // MENU POV (SUDUT PANDANG) DI KANAN ATAS
+    // ==========================================
+    int povBtnSize = 40;
+    Rectangle btnPov = { sw - povBtnSize - 20, 20, povBtnSize, povBtnSize };
+    Vector2 mousePoint = GetMousePosition();
+    bool povHover = CheckCollisionPointRec(mousePoint, btnPov);
+
+    // Warna tombol (Putih kalau normal, Abu-abu kalau di-hover agar kontras dengan ikon hitam)
+    Color btnColor = povHover ? (Color){ 220, 230, 240, 255 } : WHITE;
+
+    // Gambar Kotak Putih Terang (Background Ikon)
+    DrawRectangleRounded(btnPov, 0.3f, 5, btnColor);
+    DrawRectangleRoundedLines(btnPov, 0.3f, 5, DARKGRAY);
+
+    // Gambar Ikon pov.png di atas kotak putih
+    if (povIcon.id != 0) {
+        Rectangle source = { 0, 0, (float)povIcon.width, (float)povIcon.height };
+        Rectangle dest = { btnPov.x + 5, btnPov.y + 5, 30, 30 };
+        DrawTexturePro(povIcon, source, dest, (Vector2){0,0}, 0.0f, WHITE);
+    }
+
+    // Logika Buka/Tutup Menu saat tombol diklik
+    if (povHover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        showPovMenu = !showPovMenu;
+    }
+
+    // GAMBAR DROPDOWN MENU (HANYA JIKA AKTIF)
+    if (showPovMenu) {
+        int menuWidth = 140;
+        int itemHeight = 35;
+        // Posisi kotak menu di bawah tombol
+        Rectangle menuRect = { sw - menuWidth - 20, 20 + povBtnSize + 5, menuWidth, itemHeight * 4 };
+
+        // Background Dropdown (Agak gelap sedikit agar teks putih/hijau kelihatan)
+        DrawRectangleRounded(menuRect, 0.1f, 5, (Color){ 30, 40, 55, 250 });
+        DrawRectangleRoundedLines(menuRect, 0.1f, 5, SKYBLUE);
+
+        const char* options[4] = { "Default View", "Building View", "Mech View", "Person View" };
+        CameraFocusMode modes[4] = { CAM_FOCUS_GLOBAL, CAM_FOCUS_BUILDING, CAM_FOCUS_MECH, CAM_FOCUS_PERSON };
+
+        for (int i = 0; i < 4; i++) {
+            Rectangle itemRect = { menuRect.x, menuRect.y + (i * itemHeight), menuWidth, itemHeight };
+            bool isHoverItem = CheckCollisionPointRec(mousePoint, itemRect);
+            bool isActive = (currentCamMode == modes[i]);
+
+            // Efek hover per baris menu
+            if (isHoverItem) DrawRectangleRec(itemRect, (Color){ 50, 100, 150, 200 });
+            
+            // Penanda opsi yang sedang aktif
+            if (isActive) DrawRectangleLinesEx(itemRect, 2, GREEN);
+
+            // Gambar Teks Opsi
+            DrawText(options[i], itemRect.x + 15, itemRect.y + 12, 12, isActive ? GREEN : (isHoverItem ? WHITE : LIGHTGRAY));
+
+            // Jika salah satu baris menu diklik
+            if (isHoverItem && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                currentCamMode = modes[i];
+                showPovMenu = false; // Tutup menu setelah pilih
+            }
+        }
+
+        // Opsional: Klik di luar menu untuk menutup
+        if (!CheckCollisionPointRec(mousePoint, menuRect) && !povHover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            showPovMenu = false;
         }
     }
 }

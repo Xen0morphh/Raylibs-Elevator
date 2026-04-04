@@ -28,4 +28,5 @@ extern Elevator myLift;
 // Fungsi baru untuk mengupdate logika mesin lift setiap frame
 void UpdateLiftLogic(Elevator* lift);
 
+
 #endif

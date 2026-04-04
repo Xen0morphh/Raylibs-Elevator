@@ -39,4 +39,5 @@ void UpdatePerson(Person* p, Elevator* lift); // Logika update
 void DrawPerson(Person* p);    // Menggambar orang
 void UnloadPersonModule(void); // Unload texture
 
+
 #endif
