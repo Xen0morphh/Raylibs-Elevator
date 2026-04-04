@@ -8,11 +8,20 @@ Elevator myLift = {
 
 // Fungsi menghitung patokan Y yang akurat dan dinamis
 float GetFloorY(int floor) {
-    float sh = GetScreenHeight();
-    float floorHeight = (sh - 150) / 5.0f;
-    float floorBaseline = sh - 100 - ((floor - 1) * floorHeight);
-    float carHeight = floorHeight - 10;
-    return floorBaseline - carHeight; // Mengembalikan posisi Y (Atap Lift)
+    float sh = (float)GetScreenHeight();
+    
+    // SESUAIKAN DENGAN BuildingView.c baris 10:
+    float floorHeight = (sh - 250.0f) / 5.0f; 
+    
+    // SESUAIKAN DENGAN BuildingView.c baris 16:
+    float floorBaseline = sh - 100.0f - ((floor - 1) * floorHeight);
+    
+    // SESUAIKAN DENGAN BuildingView.c baris 21-22:
+    float carHeight = floorHeight - 10.0f;
+    
+    // Karena 'carY' di BuildingView.c itu menggambar dari ATAP lift,
+    // maka lift harus berhenti di (Baseline - Tinggi Car) agar kakinya pas di garis.
+    return floorBaseline - carHeight;
 }
 
 void UpdateLiftLogic(Elevator* lift) {
@@ -20,10 +29,10 @@ void UpdateLiftLogic(Elevator* lift) {
     if (lift->y == 0.0f) lift->y = GetFloorY(1);
 
     // 2. Kunci posisi Counterweight (Otomatis terbalik dengan Lift!)
-    float topY = GetFloorY(5);
-    float bottomY = GetFloorY(1);
-    lift->cw_y = topY + bottomY - lift->y; 
-
+    float maxY = GetFloorY(1); // Posisi Lantai 1
+    float minY = GetFloorY(5); // Posisi Lantai 5
+    lift->cw_y = minY + (maxY - lift->y);
+    
     float dt = GetFrameTime();   
     float speed = 250.0f; // Kecepatan lift dipercepat sedikit
     float targetY = GetFloorY(lift->targetFloor);
@@ -36,10 +45,10 @@ void UpdateLiftLogic(Elevator* lift) {
             break;
 
         case MOVING_UP:
-            lift->y -= speed * dt;       
+            lift->y -= speed * dt; 
             lift->pulleyAngle += speed * dt * 0.05f;
             if (lift->y <= targetY) {
-                lift->y = targetY; 
+                lift->y = targetY; // Paksa berhenti tepat di garis target
                 lift->currentFloor = lift->targetFloor;
                 lift->state = DOOR_OPENING;
             }

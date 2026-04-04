@@ -41,15 +41,22 @@ int main(void) {
         // 1. UPDATE LOGIKA (State Machine)
         // ============================================
         switch (currentScreen) {
-            case SCREEN_MENU:
-                currentScreen = UpdateMenuScreen();
-                break;
+            case SCREEN_MENU: {
+                ScreenState next = UpdateMenuScreen();
+                if (next != SCREEN_MENU) {
+                    if (next == SCREEN_GUIDE) InitGuide();      // <--- LOAD DISINI
+                    if (next == SCREEN_SIMULATION) DrawSimulationScreen(&testPerson);
+                    //if (next == SCREEN_ABOUT) InitAbout(); // Jika sudah ada
+                    currentScreen = next;
+                }
+            }break;
+            
             case SCREEN_SIMULATION:
                 if (IsKeyPressed(KEY_BACKSPACE)) currentScreen = SCREEN_MENU;
                 break;
             case SCREEN_GUIDE:
                 if (IsKeyPressed(KEY_BACKSPACE)) {
-                    UnloadGuide(); // <--- WAJIB BIAR GAK LEAK MEMORY
+                    UnloadGuide();
                     currentScreen = SCREEN_MENU;
                 }
                 break;

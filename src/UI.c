@@ -9,6 +9,8 @@ static Texture2D bgMain;
 static Texture2D povIcon;
 static bool showPovMenu = false;
 
+Texture2D GetPovIcon(void) { return povIcon; }
+
 bool DrawButtonInteractive(Rectangle rect, const char* text, Color baseColor, bool enabled) {
     Vector2 mousePoint = GetMousePosition();
     bool clicked = false;
