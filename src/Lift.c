@@ -62,12 +62,15 @@ void TriggerCloseDoor(Elevator* lift) {
     }
 }
 
+// Fungsi untuk memaksa pintu terbuka (Interupsi Timer)
 void TriggerOpenDoor(Elevator* lift) {
     if (lift->state == IDLE || lift->state == DOOR_CLOSING) {
-        lift->state = DOOR_OPENING;
-        if (audioLoaded) PlaySound(sndOpen); // <--- BUNYIKAN SUARA BUKA
+        if (lift->currentFloor == lift->targetFloor) {
+            lift->state = DOOR_OPENING;
+            if (audioLoaded) PlaySound(sndOpen); 
+        }
     } else if (lift->state == DOOR_OPEN) {
-        lift->timer = 5.0f; // Reset timer jadi 5 detik lagi kalau dipencet pas terbuka
+        lift->timer = 5.0f; 
     }
 }
 
