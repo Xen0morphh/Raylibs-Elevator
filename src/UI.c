@@ -198,23 +198,30 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
 
     DrawText("PERSON CONTROL", panelX + 15, pControlY, 12, GRAY);
 
-    // Syarat pintu terbuka penuh agar tombol bisa dipencet (Aktif/Enable)
-    bool canAction = (lift->doorOpenness >= 0.9f);
+    // P.IN aktif HANYA jika:
+    //   1. Pintu terbuka penuh
+    //   2. Orang sedang menunggu (PERSON_WAITING)
+    //   3. Lift berada di lantai yang sama dengan orang
+    bool canIn  = (lift->doorOpenness >= 0.9f)
+               && (p->state == PERSON_WAITING)
+               && (lift->currentFloor == p->startFloor);
+
+    // P.OUT aktif HANYA jika:
+    //   1. Pintu terbuka penuh
+    //   2. Orang sedang di dalam lift (PERSON_INSIDE)
+    bool canOut = (lift->doorOpenness >= 0.9f)
+               && (p->state == PERSON_INSIDE);
 
     // Tombol P. IN (Biru)
     Rectangle rIn = { panelX + 2, pControlY + 20, 60, 35 };
-    if (DrawButtonInteractive(rIn, "P. IN", (Color){ 0, 121, 241, 255 }, canAction)) {
-        if (lift->currentFloor == p->startFloor && p->state == PERSON_WAITING) {
-            p->state = PERSON_ENTERING;
-        }
+    if (DrawButtonInteractive(rIn, "P. IN", (Color){ 0, 121, 241, 255 }, canIn)) {
+        p->state = PERSON_ENTERING;
     }
 
     // Tombol P. OUT (Orange)
     Rectangle rOut = { panelX + 68, pControlY + 20, 60, 35 };
-    if (DrawButtonInteractive(rOut, "P. OUT", (Color){ 255, 161, 0, 255 }, canAction)) {
-        if (p->state == PERSON_INSIDE) {
-            p->state = PERSON_EXITING;
-        }
+    if (DrawButtonInteractive(rOut, "P. OUT", (Color){ 255, 161, 0, 255 }, canOut)) {
+        p->state = PERSON_EXITING;
     }
 
 

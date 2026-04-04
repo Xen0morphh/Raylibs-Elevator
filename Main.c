@@ -5,6 +5,7 @@
 #include "header/Simulation.h"
 #include "header/Person.h"
 #include "header/Guide.h"
+#include "header/About.h"
 Person testPerson; // Variabel global untuk subjek tes (bisa diakses semua file)
 extern Person myPerson; 
 extern Elevator myLift;
@@ -44,9 +45,9 @@ int main(void) {
             case SCREEN_MENU: {
                 ScreenState next = UpdateMenuScreen();
                 if (next != SCREEN_MENU) {
-                    if (next == SCREEN_GUIDE) InitGuide();      // <--- LOAD DISINI
+                    if (next == SCREEN_GUIDE) InitGuide();     
                     if (next == SCREEN_SIMULATION) DrawSimulationScreen(&testPerson);
-                    //if (next == SCREEN_ABOUT) InitAbout(); // Jika sudah ada
+                    if (next == SCREEN_ABOUT) InitAbout(); 
                     currentScreen = next;
                 }
             }break;
@@ -61,7 +62,10 @@ int main(void) {
                 }
                 break;
             case SCREEN_ABOUT:
-                if (IsKeyPressed(KEY_BACKSPACE)) currentScreen = SCREEN_MENU;
+                if (IsKeyPressed(KEY_BACKSPACE)) {
+                    UnloadAbout();
+                    currentScreen = SCREEN_MENU;
+                }
                 break;
             case SCREEN_EXIT:
                 goto EXIT_GAME; 
@@ -85,13 +89,10 @@ int main(void) {
                 DrawGuideScreen();
                 break;
             case SCREEN_ABOUT:
-                DrawMainBackground();
-                DrawText("--- LAYAR TENTANG ---", 250, 250, 30, DARKGREEN);
-                DrawText("Tekan BACKSPACE untuk kembali ke Menu", 200, 300, 20, GRAY);
+                DrawAboutScreen();
                 break;
             default: break;
         }
-
         EndDrawing();
     }
 
