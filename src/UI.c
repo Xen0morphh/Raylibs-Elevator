@@ -129,7 +129,10 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
 
         if (DrawButtonInteractive(r, TextFormat("%d", i), btnColor, canPress)) {
             lift->targetFloor = i;
-            if (lift->state == DOOR_OPEN) { lift->timer = 0; lift->state = DOOR_CLOSING; }
+            if (lift->state == DOOR_OPEN || lift->state == DOOR_OPENING) { 
+                lift->timer = 0; 
+                lift->state = DOOR_CLOSING; 
+            }
         }
     }
 
@@ -141,8 +144,7 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
     
     // 1. Tombol BUKA (Teks dikosongkan, pakai warna Hijau Gelap)
     if (DrawButtonInteractive(btnBuka, "", (Color){30, 150, 50, 255}, true)) {
-        if (lift->state == IDLE || lift->state == DOOR_CLOSING) lift->state = DOOR_OPENING;
-        if (lift->state == DOOR_OPEN) lift->timer = 3.0f;
+        TriggerOpenDoor(lift);
     }
     // GAMBAR ICON BUKA (< >) DI ATAS TOMBOL
     DrawLineEx((Vector2){btnBuka.x + 22, btnBuka.y + 10}, (Vector2){btnBuka.x + 15, btnBuka.y + 15}, 2, WHITE); // Panah kiri atas
@@ -153,10 +155,7 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
 
     // 2. Tombol TUTUP (Teks dikosongkan, pakai warna Merah Gelap)
     if (DrawButtonInteractive(btnTutup, "", (Color){180, 40, 40, 255}, true)) {
-        if (lift->state == DOOR_OPEN || lift->state == DOOR_OPENING) { 
-            lift->timer = 0; 
-            lift->state = DOOR_CLOSING; 
-        }
+        TriggerCloseDoor(lift);
     }
     // GAMBAR ICON TUTUP (> <) DI ATAS TOMBOL
     DrawLineEx((Vector2){btnTutup.x + 15, btnTutup.y + 10}, (Vector2){btnTutup.x + 22, btnTutup.y + 15}, 2, WHITE); // Panah kiri atas

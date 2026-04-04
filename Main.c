@@ -11,17 +11,19 @@ extern Person myPerson;
 extern Elevator myLift;
 
 int main(void) {
-    // ============================================
-    // INI BAGIAN UNTUK BIKIN FULL SCREEN
-    // ============================================
-    // Angka 0, 0 akan menyuruh Raylib mendeteksi resolusi monitor Anda secara otomatis
     InitWindow(0, 0, "Elevator Simulation Project");
-    ToggleFullscreen(); // Fungsi ajaib untuk menghilangkan border Windows
+    ToggleFullscreen(); 
+    InitAudioDevice();
+    InitLiftAudio();
 
-    // Tentukan layar pertama saat aplikasi dibuka
+    // Load file suara dari folder Sound
+    Music bgMusic = LoadMusicStream("Sound/Ambience_BgSound.mp3"); 
+    bgMusic.looping = true;  
+    SetMusicVolume(bgMusic, 0.5f);
+    PlayMusicStream(bgMusic);
+
     ScreenState currentScreen = SCREEN_MENU;
 
-    // Panggil inisialisasi modul (Load aset langsung dipanggil di sini)
     InitMenuScreen();
     InitUI();
     InitPersonModule();
@@ -37,10 +39,13 @@ int main(void) {
 
     // GAME LOOP UTAMA
     while (!WindowShouldClose()) {
-        
-        // ============================================
-        // 1. UPDATE LOGIKA (State Machine)
-        // ============================================
+        // Logic Pause Musik waktu di simulasi
+        UpdateMusicStream(bgMusic);
+        if (currentScreen == SCREEN_SIMULATION) {
+            PauseMusicStream(bgMusic); 
+        } else {
+            ResumeMusicStream(bgMusic);
+        }
         switch (currentScreen) {
             case SCREEN_MENU: {
                 ScreenState next = UpdateMenuScreen();
@@ -97,9 +102,10 @@ int main(void) {
     }
 
 EXIT_GAME:
-    
+    UnloadLiftAudio();
+    UnloadMusicStream(bgMusic); 
+    CloseAudioDevice();
     UnloadMenuScreen();
-
     CloseWindow();
     return 0;
 }

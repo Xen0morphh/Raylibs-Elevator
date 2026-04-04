@@ -124,13 +124,13 @@ void InitGuide(void) {
     s2_animDir    = 1;
     guideBg  = LoadTexture("assets/Bg_Guide.png");  
     guidePov = LoadTexture("assets/pov.png");
-    InitPersonModule();
+    //InitPersonModule();
 }
 
 void UnloadGuide(void) {
     UnloadTexture(guideBg);
     UnloadTexture(guidePov);
-    UnloadPersonModule();
+    //UnloadPersonModule();
 }
 
 int UpdateGuide(void) {

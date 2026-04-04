@@ -27,6 +27,10 @@ extern Elevator myLift;
 
 // Fungsi baru untuk mengupdate logika mesin lift setiap frame
 void UpdateLiftLogic(Elevator* lift);
+void InitLiftAudio(void);
+void UnloadLiftAudio(void);
+void TriggerOpenDoor(Elevator* lift);
+void TriggerCloseDoor(Elevator* lift);
 
 
 #endif

@@ -11,6 +11,7 @@ A simple yet powerful **Elevator Simulation** project built using **C** and **Ra
 ├── assets/              # Images, textures, and other resources
 ├── header/              # Header files (.h)
 ├── src/                 # Source files (.c)
+├── Sound/               # Sounds files (.mp3)
 ├── Elevator_Simulation.exe
 ├── Main.c
 ├── Makefile
