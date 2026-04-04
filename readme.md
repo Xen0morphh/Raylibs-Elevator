@@ -74,7 +74,7 @@ Or simply double click the `.exe` file.
 
 > You can adjust this based on your implementation
 
-* `UP / DOWN` → Move elevator
+* `BACKSPACE` → Back To Menu
 * `ESC` → Exit simulation
 
 ---
