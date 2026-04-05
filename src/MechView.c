@@ -65,7 +65,6 @@ void DrawMechView(Elevator* lift) {
     
     // Kabel Atas (Menghubungkan pucuk kedua katrol)
     DrawLineBresenham(cxLeft, pulleyY - rLeft, cxRight, pulleyY - rRight, LIGHTGRAY);
-    // ==========================================
 
     // Counterweight
     int cwX = shaftCenter + 5;

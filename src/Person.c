@@ -77,14 +77,13 @@ void UpdatePerson(Person *p, Elevator *lift) {
             }
             break;
 
-        case PERSON_INSIDE: {   // <-- kurung kurawal wajib di C99 agar variable boleh deklarasi
+        case PERSON_INSIDE: {   
             p->position.x     = INSIDE_LIFT_X;
             float sh          = (float)GetScreenHeight();
             float floorHeight = (sh - 250.0f) / 5.0f;
             float carHeight   = floorHeight - 10.0f;
             float pHeight     = (float)texWalkRight.height * SPRITE_SCALE;
             p->position.y     = lift->y + carHeight - pHeight;
-            // Orang diam di dalam lift — beku di frame 0
             p->currentFrame  = 0;
             p->framesCounter = 0;
             break;
@@ -93,7 +92,7 @@ void UpdatePerson(Person *p, Elevator *lift) {
         case PERSON_EXITING:
             p->dir         = FACING_LEFT;
             p->position.x -= walkSpeed * dt;
-            UpdatePersonAnimation(p);   // <-- INI YANG HILANG SEBELUMNYA
+            UpdatePersonAnimation(p); 
             if (p->position.x <= WAITING_X_ZONE) {
                 p->position.x = WAITING_X_ZONE;
                 p->state      = PERSON_WAITING;
