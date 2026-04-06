@@ -9,7 +9,7 @@ static Texture2D texWalkLeft;
 #define SPRITE_SCALE          2.0f 
 
 #define WAITING_X_ZONE       300.0f
-#define INSIDE_LIFT_X        470.0f
+#define INSIDE_LIFT_X        550.0f
 
 void InitPersonModule(void) {
     texWalkRight = LoadTexture("assets/walk_right-Sheet.png");
