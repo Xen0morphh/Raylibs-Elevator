@@ -1,4 +1,6 @@
 #include "../header/Lift.h"
+#include <stddef.h>
+#include "../header/Person.h"
 
 // Inisialisasi posisi awal lift
 Elevator myLift = {
@@ -74,18 +76,33 @@ void TriggerOpenDoor(Elevator* lift) {
     }
 }
 
-void UpdateLiftLogic(Elevator* lift) {
+void UpdateLiftLogic(Elevator* lift, bool personInside) {
     // 1. Inisialisasi posisi awal (hanya sekali)
     if (lift->y == 0.0f) {
         lift->y = GetFloorY(1);
         lift->currentFloor = 1;
         lift->targetFloor = 1;
+        lift->speed = 250.0f; // Kecepatan default
+        lift->speedMultiplier = 1.0f; // Pengali kecepatan default
     }
 
+    // Hitung beban orang (membuat lift melambat jika ada orang)
+    float targetMultiplier = personInside ? 0.65f : 1.0f;
+    lift->speedMultiplier += (targetMultiplier - lift->speedMultiplier) * GetFrameTime() * 3.0f;
+
+    // =========================================================
+    // DEKLARASI VARIABEL UTAMA (HANYA SEKALI SAJA DI SINI)
+    // =========================================================
     float sh = (float)GetScreenHeight();
     float dt = GetFrameTime();   
-    float speed = 250.0f; 
+    float speed = lift->speed * lift->speedMultiplier; 
     float targetY = GetFloorY(lift->targetFloor);
+    
+    float maxY = GetFloorY(1); 
+    float minY = GetFloorY(5); 
+
+    // Update posisi Counterweight
+    lift->cw_y = minY + (maxY - lift->y);
 
     // =========================================================
     // 2. UPDATE LANTAI DINAMIS (Hanya saat lift bergerak)
@@ -94,14 +111,10 @@ void UpdateLiftLogic(Elevator* lift) {
         float floorHeight = (sh - 250.0f) / 5.0f;
         float floorBaseline1 = sh - 100.0f; 
         
-        // Kita gunakan rumus yang lebih stabil:
-        // Ambil titik tengah lift (y + carHeight/2) untuk deteksi lantai
         float carHeight = floorHeight - 10.0f;
         float centerY = lift->y + (carHeight / 2.0f);
         
         float relativePos = (floorBaseline1 - centerY) / floorHeight;
-        
-        // Pembulatan menggunakan + 1.0f agar Lantai 1 terbaca sebagai 1
         int detectedFloor = (int)(relativePos + 1.0f);
         
         if (detectedFloor >= 1 && detectedFloor <= 5) {
@@ -109,17 +122,11 @@ void UpdateLiftLogic(Elevator* lift) {
         }
     }
 
-    // Update posisi Counterweight
-    float maxY = GetFloorY(1); 
-    float minY = GetFloorY(5); 
-    lift->cw_y = minY + (maxY - lift->y);
-
     // =========================================================
     // 3. STATE MACHINE (Logika Pergerakan)
     // =========================================================
     switch (lift->state) {
         case IDLE:
-            // Gunakan targetFloor sebagai patokan utama agar tidak bingung
             if (lift->currentFloor != lift->targetFloor) {
                 lift->state = (lift->y > targetY) ? MOVING_UP : MOVING_DOWN;
                 if (audioLoaded) PlaySound(sndMove);
@@ -131,7 +138,7 @@ void UpdateLiftLogic(Elevator* lift) {
             lift->pulleyAngle += speed * dt * 0.05f;
             if (lift->y <= targetY) {
                 lift->y = targetY; 
-                lift->currentFloor = lift->targetFloor; // Pastikan angka pas saat sampai
+                lift->currentFloor = lift->targetFloor; 
                 lift->state = DOOR_OPENING;
                 if (audioLoaded) {
                     StopSound(sndMove); 
@@ -146,7 +153,7 @@ void UpdateLiftLogic(Elevator* lift) {
             lift->pulleyAngle -= speed * dt * 0.05f;
             if (lift->y >= targetY) {
                 lift->y = targetY;
-                lift->currentFloor = lift->targetFloor; // Pastikan angka pas saat sampai
+                lift->currentFloor = lift->targetFloor; 
                 lift->state = DOOR_OPENING;
                 if (audioLoaded) {
                     StopSound(sndMove);

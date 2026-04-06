@@ -2,6 +2,7 @@
 #include "../header/Lift.h"
 #include "../header/Transformasi.h"
 #include "../header/Person.h"
+#include "../header/UI.h"
 
 void DrawBuildingView(Elevator* lift, Person* p) {
     float sw = GetScreenWidth();
@@ -49,13 +50,76 @@ void DrawBuildingView(Elevator* lift, Person* p) {
         DrawPerson(p);
     }   
     
-    float doorWidth = (carWidth / 2.0f) * (1.0f - lift->doorOpenness);
-    if (doorWidth > 0.0f) {
-        DrawRectangle(carX, carY, doorWidth, carHeight, (Color){20, 60, 100, 255});
-        DrawRectCustom(carX, carY, doorWidth, carHeight, SKYBLUE); 
-        DrawRectangle(carX + carWidth - doorWidth, carY, doorWidth, carHeight, (Color){20, 60, 100, 255});
-        DrawRectCustom(carX + carWidth - doorWidth, carY, doorWidth, carHeight, SKYBLUE); 
+    // ==========================================
+    // KOTAK LIFT — dengan wireframe mode
+    // ==========================================
+    bool wf = GetWireframeMode(); 
+
+    if (!wf) {
+        // Mode Normal: isi penuh
+        DrawRectangle(carX, carY, carWidth, carHeight, (Color){40, 40, 40, 255});
+    }
+    // Outline selalu digambar (baik normal maupun wireframe)
+    DrawRectCustom(carX, carY, carWidth, carHeight, BLUE);
+
+    // ==========================================
+    // INDIKATOR BEBAN DI DALAM CAR
+    // (Tampil saat PERSON_INSIDE, di pojok kanan atas car)
+    // ==========================================
+    if (p->state == PERSON_INSIDE) {
+        // Latar kecil
+        int iX = carX + carWidth - 38;
+        int iY = carY + 6;
+        DrawRectangleRounded((Rectangle){iX, iY, 32, 44}, 0.3f, 5,
+                             (Color){10, 10, 10, 200});
+        DrawRectangleRoundedLines((Rectangle){iX, iY, 32, 44}, 0.3f, 5, ORANGE);
+
+        // Label
+        DrawText("kg", iX + 8, iY + 3, 8, ORANGE);
+
+        // Bar beban (persen terhadap kapasitas 320kg, asumsi 1 orang = 70kg)
+        float loadPct = 70.0f / 320.0f; // ~22%
+        int barH    = 28;
+        int fillH   = (int)(barH * loadPct);
+        int barX    = iX + 10;
+        int barY    = iY + 14;
+
+        DrawRectangle(barX, barY, 12, barH, (Color){30, 30, 30, 255});         // Background bar
+        DrawRectangle(barX, barY + barH - fillH, 12, fillH, ORANGE);            // Isi bar
+        DrawRectangleLines(barX, barY, 12, barH, GRAY);                          // Border
+
+        // Angka persen kecil
+        DrawText(TextFormat("%d%%", (int)(loadPct * 100)),
+                 iX + 2, iY + 34, 8, ORANGE);
     }
 
-    DrawRectCustom(carX, carY, carWidth, carHeight, BLUE);
+    // Gambar orang
+    if (p->state != PERSON_GONE && p->position.x < leftWidth) {
+        DrawPerson(p);
+    }
+
+    // ==========================================
+    // PINTU — dengan wireframe mode
+    // ==========================================
+    float doorWidth = (carWidth / 2.0f) * (1.0f - lift->doorOpenness);
+    if (doorWidth > 0.0f) {
+        if (!wf) {
+            DrawRectangle(carX, carY, doorWidth, carHeight,
+                          (Color){20, 60, 100, 255});
+            DrawRectangle(carX + carWidth - doorWidth, carY, doorWidth, carHeight,
+                          (Color){20, 60, 100, 255});
+        }
+        DrawRectCustom(carX, carY, doorWidth, carHeight, SKYBLUE);
+        DrawRectCustom(carX + carWidth - doorWidth, carY, doorWidth, carHeight, SKYBLUE);
+    }
+
+    // ==========================================
+    // LORONG DAN LANTAI — wireframe mode
+    // ==========================================
+    if (!wf) {
+        DrawRectCustom(shaftX, 120, shaftWidth, sh - 170, DARKGRAY);
+    } else {
+        // Hanya outline lorong
+        DrawRectCustom(shaftX, 120, shaftWidth, sh - 170, (Color){80, 80, 80, 180});
+    }
 }

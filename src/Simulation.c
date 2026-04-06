@@ -14,7 +14,7 @@ void DrawSimulationScreen(Person* p) {
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), (Color){ 10, 15, 25, 200 });
 
     // 2. UPDATE LOGIKA & POSISI (Wajib di-update sebelum digambar)
-    UpdateLiftLogic(&myLift);
+    UpdateLiftLogic(&myLift, p->state == PERSON_INSIDE); // Update logika lift dengan informasi orang
     UpdatePerson(p, &myLift);
     UpdateSimCamera(p); // Update posisi dan zoom kamera
 

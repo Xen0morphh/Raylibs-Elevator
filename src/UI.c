@@ -6,10 +6,15 @@
 #include "../header/Camera.h"
 
 static Texture2D bgMain;
-static Texture2D povIcon;
 static bool showPovMenu = false;
 
-Texture2D GetPovIcon(void) { return povIcon; }
+static bool wireframeMode = false;
+
+bool GetWireframeMode(void) { 
+    return wireframeMode; 
+}
+
+
 
 bool DrawButtonInteractive(Rectangle rect, const char* text, Color baseColor, bool enabled) {
     Vector2 mousePoint = GetMousePosition();
@@ -48,8 +53,9 @@ bool DrawButtonInteractive(Rectangle rect, const char* text, Color baseColor, bo
 
 void InitUI(void) {
     bgMain = LoadTexture("assets/Bg_Main.png");
-    povIcon = LoadTexture("assets/pov.png");
+    // povIcon SUDAH DIMUSNAHKAN!
 }
+
 void DrawMainBackground(void) {
     // PARALLAX BACKGROUND: Efek gambar bergerak mengikuti posisi mouse
     float sw = GetScreenWidth();
@@ -82,16 +88,12 @@ void DrawMainBackground(void) {
 
 void UnloadUI(void) {
     UnloadTexture(bgMain);
-    UnloadTexture(povIcon);
+    // povIcon SUDAH DIMUSNAHKAN!
 }
 
 void DrawSimulationUI(Elevator* lift, Person* p) {
     float sw = GetScreenWidth();
     float sh = GetScreenHeight();
-
-    // Garis Belah Tengah & Status Bar
-    //DrawLineBresenham(sw * 0.55f, 0, sw * 0.55f, sh, (Color){ 50, 100, 150, 255 });
-    //DrawRectCustom(0, sh - 40, sw, 40, LIGHTGRAY);
 
     // KOTAK INFO STATUS (Kiri Atas)
     static int  displayFloor  = 1;   // Lantai yang sedang ditampilkan
@@ -108,7 +110,6 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
         animDir      = (displayFloor > prevFloor) ? 1 : -1;
         animTimer    = 0.0f; // Reset timer animasi
     }
-
 
     // Update timer animasi setiap frame
     if (animTimer < 1.0f) {
@@ -134,8 +135,6 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
     int numCenterX = infoX + 45;
     int numBaseY   = infoY + 15; // posisi Y akhir angka baru
 
-    // Offset gerak: animDir +1 (naik) → angka baru datang dari BAWAH (+), keluar ke ATAS (-)
-    //               animDir -1 (turun) → angka baru datang dari ATAS (-), keluar ke BAWAH (+)
     int slideRange = 40; // jarak slide dalam pixel
 
     // --- Angka LAMA (slide keluar) ---
@@ -167,7 +166,6 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
     else if (lift->state == MOVING_DOWN) { dirText = "TURUN v"; dirColor = RED; }
     DrawText(dirText, infoX + 30, infoY + 55, 15, dirColor);
 
-
     // PANEL KONTROL IN-CAR (Kiri Bawah)
     int panelX = 20; 
     int panelY = sh - 350; 
@@ -184,7 +182,6 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
         Rectangle r = { btnX - 18, btnY - 18, 36, 36 };
         
         bool isTarget = (lift->targetFloor == i);
-        // Warna cerah jika lantai dituju, gelap jika tidak
         Color btnColor = isTarget ? (Color){0, 160, 255, 255} : (Color){20, 40, 60, 255}; 
         bool canPress = (lift->state == IDLE || lift->state == DOOR_OPEN);
 
@@ -203,32 +200,27 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
     Rectangle btnBuka = {panelX + 15, panelY + 190, 50, 30};
     Rectangle btnTutup = {panelX + 75, panelY + 190, 50, 30};
     
-    // 1. Tombol BUKA (Teks dikosongkan, pakai warna Hijau Gelap)
+    // 1. Tombol BUKA (Hijau Gelap)
     if (DrawButtonInteractive(btnBuka, "", (Color){30, 150, 50, 255}, true)) {
         TriggerOpenDoor(lift);
     }
-    // GAMBAR ICON BUKA (< >) DI ATAS TOMBOL
-    DrawLineEx((Vector2){btnBuka.x + 22, btnBuka.y + 10}, (Vector2){btnBuka.x + 15, btnBuka.y + 15}, 2, WHITE); // Panah kiri atas
-    DrawLineEx((Vector2){btnBuka.x + 15, btnBuka.y + 15}, (Vector2){btnBuka.x + 22, btnBuka.y + 20}, 2, WHITE); // Panah kiri bawah
-    DrawLineEx((Vector2){btnBuka.x + 28, btnBuka.y + 10}, (Vector2){btnBuka.x + 35, btnBuka.y + 15}, 2, WHITE); // Panah kanan atas
-    DrawLineEx((Vector2){btnBuka.x + 35, btnBuka.y + 15}, (Vector2){btnBuka.x + 28, btnBuka.y + 20}, 2, WHITE); // Panah kanan bawah
+    DrawLineEx((Vector2){btnBuka.x + 22, btnBuka.y + 10}, (Vector2){btnBuka.x + 15, btnBuka.y + 15}, 2, WHITE); 
+    DrawLineEx((Vector2){btnBuka.x + 15, btnBuka.y + 15}, (Vector2){btnBuka.x + 22, btnBuka.y + 20}, 2, WHITE); 
+    DrawLineEx((Vector2){btnBuka.x + 28, btnBuka.y + 10}, (Vector2){btnBuka.x + 35, btnBuka.y + 15}, 2, WHITE); 
+    DrawLineEx((Vector2){btnBuka.x + 35, btnBuka.y + 15}, (Vector2){btnBuka.x + 28, btnBuka.y + 20}, 2, WHITE); 
 
-
-    // 2. Tombol TUTUP (Teks dikosongkan, pakai warna Merah Gelap)
+    // 2. Tombol TUTUP (Merah Gelap)
     if (DrawButtonInteractive(btnTutup, "", (Color){180, 40, 40, 255}, true)) {
         TriggerCloseDoor(lift);
     }
-    // GAMBAR ICON TUTUP (> <) DI ATAS TOMBOL
-    DrawLineEx((Vector2){btnTutup.x + 15, btnTutup.y + 10}, (Vector2){btnTutup.x + 22, btnTutup.y + 15}, 2, WHITE); // Panah kiri atas
-    DrawLineEx((Vector2){btnTutup.x + 22, btnTutup.y + 15}, (Vector2){btnTutup.x + 15, btnTutup.y + 20}, 2, WHITE); // Panah kiri bawah
-    DrawLineEx((Vector2){btnTutup.x + 35, btnTutup.y + 10}, (Vector2){btnTutup.x + 28, btnTutup.y + 15}, 2, WHITE); // Panah kanan atas
+    DrawLineEx((Vector2){btnTutup.x + 15, btnTutup.y + 10}, (Vector2){btnTutup.x + 22, btnTutup.y + 15}, 2, WHITE); 
+    DrawLineEx((Vector2){btnTutup.x + 22, btnTutup.y + 15}, (Vector2){btnTutup.x + 15, btnTutup.y + 20}, 2, WHITE); 
+    DrawLineEx((Vector2){btnTutup.x + 35, btnTutup.y + 10}, (Vector2){btnTutup.x + 28, btnTutup.y + 15}, 2, WHITE); 
     DrawLineEx((Vector2){btnTutup.x + 28, btnTutup.y + 15}, (Vector2){btnTutup.x + 35, btnTutup.y + 20}, 2, WHITE);
-
 
     // ==========================================
     // TEKS STATUS BAR BAWAH
     // ==========================================
-
     const char* stateStr = "IDLE";
     if (lift->state == MOVING_UP) stateStr = "MOVING_UP";
     else if (lift->state == MOVING_DOWN) stateStr = "MOVING_DOWN";
@@ -236,17 +228,14 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
     else if (lift->state == DOOR_OPEN) stateStr = "OPEN (WAIT)";
     else if (lift->state == DOOR_CLOSING) stateStr = "CLOSING";
 
-    // Mengubah nilai float Pintu menjadi Teks
     const char* doorStr = (lift->doorOpenness == 0.0f) ? "TERTUTUP" :
                           (lift->doorOpenness == 1.0f) ? "TERBUKA" : "PROSES...";
 
-    // Menggambar teks berjajar di kiri bawah
     DrawText(TextFormat("STATE: %s", stateStr), 20, sh - 30, 20, GREEN);
     DrawText(TextFormat("FLOOR: %d", lift->currentFloor), 250, sh - 30, 20, DARKGRAY);
     DrawText(TextFormat("TARGET: %d", lift->targetFloor), 380, sh - 30, 20, DARKGRAY);
     DrawText(TextFormat("DOOR: %s", doorStr), 520, sh - 30, 20, ORANGE);
 
-    // INFO TOMBOL (Kanan Bawah)
     const char* helpText = "ESC: Exit Program  |  BACKSPACE: Kembali ke Menu";
     int textWidth = MeasureText(helpText, 15);
     DrawText(helpText, sw - textWidth - 20, sh - 28, 15, DARKGRAY);
@@ -254,36 +243,80 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
     // ==========================================
     // TOMBOL KONTROL ORANG (Person Control)
     // ==========================================   
-    int pControlY = panelY + 250; // Jarak 10 pixel di bawah kotak IN-CAR (240+10)
-
+    int pControlY = panelY + 250; 
     DrawText("PERSON CONTROL", panelX + 15, pControlY, 12, GRAY);
 
-    // P.IN aktif HANYA jika:
-    //   1. Pintu terbuka penuh
-    //   2. Orang sedang menunggu (PERSON_WAITING)
-    //   3. Lift berada di lantai yang sama dengan orang
     bool canIn  = (lift->doorOpenness >= 0.9f)
                && (p->state == PERSON_WAITING)
                && (lift->currentFloor == p->startFloor);
 
-    // P.OUT aktif HANYA jika:
-    //   1. Pintu terbuka penuh
-    //   2. Orang sedang di dalam lift (PERSON_INSIDE)
     bool canOut = (lift->doorOpenness >= 0.9f)
                && (p->state == PERSON_INSIDE);
 
-    // Tombol P. IN (Biru)
     Rectangle rIn = { panelX + 2, pControlY + 20, 60, 35 };
     if (DrawButtonInteractive(rIn, "P. IN", (Color){ 0, 121, 241, 255 }, canIn)) {
         p->state = PERSON_ENTERING;
     }
 
-    // Tombol P. OUT (Orange)
     Rectangle rOut = { panelX + 68, pControlY + 20, 60, 35 };
     if (DrawButtonInteractive(rOut, "P. OUT", (Color){ 255, 161, 0, 255 }, canOut)) {
         p->state = PERSON_EXITING;
     }
 
+    // ==========================================
+    // PANEL SPEED 
+    // ==========================================
+    int spdPanelW = 140;
+    int spdPanelH = 130;
+    int spdPanelX = (sw - spdPanelW) / 2.0f; 
+    int spdPanelY = 20; 
+
+    DrawRectangleRounded((Rectangle){spdPanelX, spdPanelY, spdPanelW, spdPanelH}, 0.2f, 10,
+                        (Color){ 10, 20, 35, 230 });
+    DrawRectangleRoundedLines((Rectangle){spdPanelX, spdPanelY, spdPanelW, spdPanelH}, 0.2f, 10, SKYBLUE);
+    DrawText("SPEED CTRL", spdPanelX + 35, spdPanelY + 10, 12, SKYBLUE);
+    DrawLine(spdPanelX + 15, spdPanelY + 25, spdPanelX + spdPanelW - 15, spdPanelY + 25, (Color){30, 80, 120, 255});
+
+    DrawText(TextFormat("%.0f px/s", lift->speed * lift->speedMultiplier),
+            spdPanelX + 35, spdPanelY + 35, 15, WHITE);
+
+    Color loadColor = GREEN;
+    const char* loadStr = "KOSONG";
+    if (p->state == PERSON_INSIDE) {
+        loadColor = ORANGE;
+        loadStr   = "BERPENUMPANG";
+        DrawText(loadStr, spdPanelX + 25, spdPanelY + 55, 10, loadColor);
+    } else {
+        DrawText(loadStr, spdPanelX + 45, spdPanelY + 55, 10, loadColor);
+    }
+
+    Rectangle btnSpeedDown = { spdPanelX + 15,  spdPanelY + 75, 45, 25 };
+    if (DrawButtonInteractive(btnSpeedDown, "- SPD", (Color){80, 40, 40, 255}, true)) {
+        lift->speed -= 25.0f;
+        if (lift->speed < 50.0f) lift->speed = 50.0f; 
+    }
+
+    Rectangle btnSpeedUp = { spdPanelX + 80, spdPanelY + 75, 45, 25 };
+    if (DrawButtonInteractive(btnSpeedUp, "+ SPD", (Color){40, 80, 40, 255}, true)) {
+        lift->speed += 25.0f;
+        if (lift->speed > 600.0f) lift->speed = 600.0f; 
+    }
+
+    Rectangle btnSpeedReset = { spdPanelX + 15, spdPanelY + 105, 110, 20 };
+    if (DrawButtonInteractive(btnSpeedReset, "RESET NORMAL", (Color){40, 40, 80, 255}, true)) {
+        lift->speed = 250.0f;
+    }
+
+    // ==========================================
+    // TOMBOL WIREFRAME (Pojok Kanan Bawah)
+    // ==========================================
+    Rectangle btnWire = { sw - 200, sh - 55, 130, 25 };
+    Color wireColor = wireframeMode ? (Color){255, 165, 0, 255} : (Color){30, 60, 90, 255};
+    if (DrawButtonInteractive(btnWire, 
+        wireframeMode ? "WIREFRAME: ON" : "WIREFRAME: OFF", wireColor, true)) {
+        wireframeMode = !wireframeMode;
+    }
+    if (IsKeyPressed(KEY_F)) wireframeMode = !wireframeMode;
 
     // ==========================================
     // MENU POV (SUDUT PANDANG) DI KANAN ATAS
@@ -293,18 +326,38 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
     Vector2 mousePoint = GetMousePosition();
     bool povHover = CheckCollisionPointRec(mousePoint, btnPov);
 
-    // Warna tombol (Putih kalau normal, Abu-abu kalau di-hover agar kontras dengan ikon hitam)
-    Color btnColor = povHover ? (Color){ 220, 230, 240, 255 } : WHITE;
+    bool wf = GetWireframeMode(); 
 
-    // Gambar Kotak Putih Terang (Background Ikon)
-    DrawRectangleRounded(btnPov, 0.3f, 5, btnColor);
-    DrawRectangleRoundedLines(btnPov, 0.3f, 5, DARKGRAY);
+    // 1. GAMBAR BACKGROUND TOMBOL POV
+    if (!wf) {
+        Color btnColor = povHover ? (Color){ 220, 230, 240, 255 } : WHITE;
+        DrawRectangleRounded(btnPov, 0.3f, 5, btnColor);
+        DrawRectangleRoundedLines(btnPov, 0.3f, 5, DARKGRAY);
+    } else {
+        Color wireBtnColor = povHover ? GREEN : SKYBLUE;
+        DrawRectangleRoundedLines(btnPov, 0.3f, 5, wireBtnColor);
+    }
 
-    // Gambar Ikon pov.png di atas kotak putih
-    if (povIcon.id != 0) {
-        Rectangle source = { 0, 0, (float)povIcon.width, (float)povIcon.height };
-        Rectangle dest = { btnPov.x + 5, btnPov.y + 5, 30, 30 };
-        DrawTexturePro(povIcon, source, dest, (Vector2){0,0}, 0.0f, WHITE);
+    // 2. GAMBAR IKON POV (FULL KODINGAN MURNI!)
+    int cx = btnPov.x + 20; 
+    int cy = btnPov.y + 20; 
+    Color iconColor = povHover ? GREEN : SKYBLUE; 
+    Color solidColor = povHover ? DARKGRAY : BLACK; 
+
+    if (!wf) {
+        // Mode Normal: Gambar ikon kamera solid pakai shape Raylib
+        DrawRectangle(cx - 10, cy - 7, 20, 14, solidColor); // Body kotak
+        DrawRectangle(cx - 7, cy - 10, 8, 3, solidColor);   // Tombol jepret
+        DrawCircle(cx, cy, 4, WHITE);                       // Lensa putih
+        DrawCircle(cx, cy, 2, solidColor);                  // Titik tengah lensa
+    } 
+    else {
+        // Mode Wireframe: Gambar Ikon Kamera pakai garis murni
+        DrawRectangleLines(cx - 10, cy - 7, 20, 14, iconColor);
+        DrawLine(cx - 7, cy - 7, cx - 7, cy - 10, iconColor);
+        DrawLine(cx - 3, cy - 7, cx - 3, cy - 10, iconColor);
+        DrawLine(cx - 7, cy - 10, cx - 3, cy - 10, iconColor);
+        DrawCircleLines(cx, cy, 4, ORANGE);
     }
 
     // Logika Buka/Tutup Menu saat tombol diklik
@@ -316,10 +369,8 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
     if (showPovMenu) {
         int menuWidth = 140;
         int itemHeight = 35;
-        // Posisi kotak menu di bawah tombol
         Rectangle menuRect = { sw - menuWidth - 20, 20 + povBtnSize + 5, menuWidth, itemHeight * 4 };
 
-        // Background Dropdown (Agak gelap sedikit agar teks putih/hijau kelihatan)
         DrawRectangleRounded(menuRect, 0.1f, 5, (Color){ 30, 40, 55, 250 });
         DrawRectangleRoundedLines(menuRect, 0.1f, 5, SKYBLUE);
 
@@ -331,23 +382,17 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
             bool isHoverItem = CheckCollisionPointRec(mousePoint, itemRect);
             bool isActive = (currentCamMode == modes[i]);
 
-            // Efek hover per baris menu
             if (isHoverItem) DrawRectangleRec(itemRect, (Color){ 50, 100, 150, 200 });
-            
-            // Penanda opsi yang sedang aktif
             if (isActive) DrawRectangleLinesEx(itemRect, 2, GREEN);
 
-            // Gambar Teks Opsi
             DrawText(options[i], itemRect.x + 15, itemRect.y + 12, 12, isActive ? GREEN : (isHoverItem ? WHITE : LIGHTGRAY));
 
-            // Jika salah satu baris menu diklik
             if (isHoverItem && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 currentCamMode = modes[i];
-                showPovMenu = false; // Tutup menu setelah pilih
+                showPovMenu = false; 
             }
         }
 
-        // Opsional: Klik di luar menu untuk menutup
         if (!CheckCollisionPointRec(mousePoint, menuRect) && !povHover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             showPovMenu = false;
         }

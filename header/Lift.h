@@ -21,12 +21,14 @@ typedef struct {
     float doorOpenness;  // 0.0f (tertutup) sampai 1.0f (terbuka penuh)
     float pulleyAngle;   // Menyimpan sudut putaran katrol
     float timer;         // Menyimpan waktu tunggu 3 detik
+    float speed;         // Kecepatan naik/turun lift (pixel per detik)
+    float speedMultiplier; // Pengali kecepatan untuk variasi (mis. saat orang masuk/keluar)
 } Elevator;
 
 extern Elevator myLift;
 
 // Fungsi baru untuk mengupdate logika mesin lift setiap frame
-void UpdateLiftLogic(Elevator* lift);
+void UpdateLiftLogic(Elevator* lift, bool personInside);
 void InitLiftAudio(void);
 void UnloadLiftAudio(void);
 void TriggerOpenDoor(Elevator* lift);

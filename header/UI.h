@@ -2,6 +2,10 @@
 #define UI_H
 #include "Lift.h"
 #include "Person.h"
+#include "UI.h"
+
+// Fungsi untuk mengecek apakah mode wireframe aktif (untuk digunakan di berbagai file)
+bool GetWireframeMode(void);
 
 // Fungsi untuk load gambar global
 void InitUI(void);
