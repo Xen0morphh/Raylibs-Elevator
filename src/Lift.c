@@ -1,6 +1,5 @@
 #include "../header/Lift.h"
 #include <stddef.h>
-#include "../header/Person.h"
 
 // Inisialisasi posisi awal lift
 Elevator myLift = {
@@ -15,7 +14,6 @@ static Sound sndOpen;
 static Sound sndClose;
 static bool audioLoaded = false;
 
-// Fungsi untuk Initate Audio
 void InitLiftAudio(void) {
     sndMove  = LoadSound("Sound/Elevator_Move.mp3");
     SetSoundVolume(sndMove, 0.8f);
@@ -37,34 +35,22 @@ void UnloadLiftAudio(void) {
     UnloadSound(sndClose);
 }
 
-// Fungsi menghitung patokan Y yang akurat dan dinamis
 float GetFloorY(int floor) {
     float sh = (float)GetScreenHeight();
-    
-    // SESUAIKAN DENGAN BuildingView.c baris 10:
     float floorHeight = (sh - 250.0f) / 5.0f; 
-    
-    // SESUAIKAN DENGAN BuildingView.c baris 16:
     float floorBaseline = sh - 100.0f - ((floor - 1) * floorHeight);
-    
-    // SESUAIKAN DENGAN BuildingView.c baris 21-22:
     float carHeight = floorHeight - 10.0f;
-    
-    // Karena 'carY' di BuildingView.c itu menggambar dari ATAP lift,
-    // maka lift harus berhenti di (Baseline - Tinggi Car) agar kakinya pas di garis.
     return floorBaseline - carHeight;
 }
 
-// Fungsi untuk memaksa pintu tertutup (Interupsi Timer)
 void TriggerCloseDoor(Elevator* lift) {
     if (lift->state == DOOR_OPEN || lift->state == DOOR_OPENING) {
         lift->state = DOOR_CLOSING;
         lift->timer = 0;
-        if (audioLoaded) PlaySound(sndClose); // <--- BUNYIKAN SUARA TUTUP
+        if (audioLoaded) PlaySound(sndClose);
     }
 }
 
-// Fungsi untuk memaksa pintu terbuka (Interupsi Timer)
 void TriggerOpenDoor(Elevator* lift) {
     if (lift->state == IDLE || lift->state == DOOR_CLOSING) {
         if (lift->currentFloor == lift->targetFloor) {
@@ -76,41 +62,94 @@ void TriggerOpenDoor(Elevator* lift) {
     }
 }
 
+// =======================================================
+// OTAK ALGORITMA ANTRIAN (SCAN ALGORITHM)
+// =======================================================
+int CalculateNextTarget(Elevator* lift) {
+    // 1. Cek apakah ada tombol biru yang ditekan?
+    bool hasRequest = false;
+    for (int i = 1; i <= 5; i++) {
+        if (lift->floorRequests[i]) hasRequest = true;
+    }
+    
+    // Kalau nggak ada antrian, diam di lantai sekarang
+    if (!hasRequest) {
+        lift->currentDir = 0;
+        return lift->currentFloor;
+    }
+
+    // 2. Jika lift habis diam, tentukan arah mau ke atas atau ke bawah
+    if (lift->currentDir == 0) {
+        for (int i = 1; i <= 5; i++) {
+            if (lift->floorRequests[i]) {
+                lift->currentDir = (i > lift->currentFloor) ? 1 : -1;
+                break;
+            }
+        }
+    }
+
+    // 3. Menyapu antrian ke ATAS
+    if (lift->currentDir == 1) {
+        for (int i = lift->currentFloor; i <= 5; i++) {
+            if (lift->floorRequests[i]) return i;
+        }
+        lift->currentDir = -1; // Kalau di atas udah bersih, putar balik ke bawah
+    }
+
+    // 4. Menyapu antrian ke BAWAH
+    if (lift->currentDir == -1) {
+        for (int i = lift->currentFloor; i >= 1; i--) {
+            if (lift->floorRequests[i]) return i;
+        }
+        lift->currentDir = 1; // Kalau di bawah udah bersih, putar balik ke atas
+        
+        // Cek ulang ke atas jaga-jaga ada yang nekan tombol pas lagi putar balik
+        for (int i = lift->currentFloor; i <= 5; i++) {
+            if (lift->floorRequests[i]) return i;
+        }
+    }
+    
+    return lift->currentFloor; 
+}
+
+
+// =======================================================
+// LOGIKA UTAMA LIFT
+// =======================================================
 void UpdateLiftLogic(Elevator* lift, bool personInside) {
-    // 1. Inisialisasi posisi awal (hanya sekali)
+    // Inisialisasi awal pas program baru nyala
     if (lift->y == 0.0f) {
         lift->y = GetFloorY(1);
         lift->currentFloor = 1;
         lift->targetFloor = 1;
-        lift->speed = 250.0f; // Kecepatan default
-        lift->speedMultiplier = 1.0f; // Pengali kecepatan default
+        lift->speed = 250.0f; 
+        lift->speedMultiplier = 1.0f; 
+        lift->currentDir = 0;
+        for(int i=0; i<6; i++) lift->floorRequests[i] = false;
     }
 
-    // Hitung beban orang (membuat lift melambat jika ada orang)
-    float targetMultiplier = personInside ? 0.65f : 1.0f;
-    lift->speedMultiplier += (targetMultiplier - lift->speedMultiplier) * GetFrameTime() * 3.0f;
-
-    // =========================================================
-    // DEKLARASI VARIABEL UTAMA (HANYA SEKALI SAJA DI SINI)
-    // =========================================================
     float sh = (float)GetScreenHeight();
     float dt = GetFrameTime();   
+    
+    // Beban kecepatan orang
+    float targetMultiplier = personInside ? 0.65f : 1.0f;
+    lift->speedMultiplier += (targetMultiplier - lift->speedMultiplier) * dt * 3.0f;
     float speed = lift->speed * lift->speedMultiplier; 
-    float targetY = GetFloorY(lift->targetFloor);
+
+    // =========================================================
+    // HITUNG TARGET SEBELUM STATE MACHINE (PENTING BIAR NGGAK MOGOK)
+    // =========================================================
+    lift->targetFloor = CalculateNextTarget(lift);
+    float targetY = GetFloorY(lift->targetFloor); // <--- Sekarang targetY aman!
     
     float maxY = GetFloorY(1); 
     float minY = GetFloorY(5); 
-
-    // Update posisi Counterweight
     lift->cw_y = minY + (maxY - lift->y);
 
-    // =========================================================
-    // 2. UPDATE LANTAI DINAMIS (Hanya saat lift bergerak)
-    // =========================================================
+    // Update Lantai Dinamis
     if (lift->state == MOVING_UP || lift->state == MOVING_DOWN) {
         float floorHeight = (sh - 250.0f) / 5.0f;
         float floorBaseline1 = sh - 100.0f; 
-        
         float carHeight = floorHeight - 10.0f;
         float centerY = lift->y + (carHeight / 2.0f);
         
@@ -123,11 +162,17 @@ void UpdateLiftLogic(Elevator* lift, bool personInside) {
     }
 
     // =========================================================
-    // 3. STATE MACHINE (Logika Pergerakan)
+    // STATE MACHINE
     // =========================================================
     switch (lift->state) {
         case IDLE:
-            if (lift->currentFloor != lift->targetFloor) {
+            // Jika tombol yg dipencet adalah lantai dia saat ini
+            if (lift->floorRequests[lift->currentFloor]) {
+                lift->floorRequests[lift->currentFloor] = false; // Matikan birunya
+                lift->state = DOOR_OPENING;                      // Langsung buka pintu!
+                if (audioLoaded) PlaySound(sndOpen);
+            } 
+            else if (lift->currentFloor != lift->targetFloor) {
                 lift->state = (lift->y > targetY) ? MOVING_UP : MOVING_DOWN;
                 if (audioLoaded) PlaySound(sndMove);
             }
@@ -139,12 +184,9 @@ void UpdateLiftLogic(Elevator* lift, bool personInside) {
             if (lift->y <= targetY) {
                 lift->y = targetY; 
                 lift->currentFloor = lift->targetFloor; 
+                lift->floorRequests[lift->currentFloor] = false; // Matikan tombol biru
                 lift->state = DOOR_OPENING;
-                if (audioLoaded) {
-                    StopSound(sndMove); 
-                    PlaySound(sndDing); 
-                    PlaySound(sndOpen); 
-                }
+                if (audioLoaded) { StopSound(sndMove); PlaySound(sndDing); PlaySound(sndOpen); }
             }
             break;
 
@@ -154,12 +196,9 @@ void UpdateLiftLogic(Elevator* lift, bool personInside) {
             if (lift->y >= targetY) {
                 lift->y = targetY;
                 lift->currentFloor = lift->targetFloor; 
+                lift->floorRequests[lift->currentFloor] = false; // Matikan tombol biru
                 lift->state = DOOR_OPENING;
-                if (audioLoaded) {
-                    StopSound(sndMove);
-                    PlaySound(sndDing);
-                    PlaySound(sndOpen);
-                }
+                if (audioLoaded) { StopSound(sndMove); PlaySound(sndDing); PlaySound(sndOpen); }
             }
             break;
 

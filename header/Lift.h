@@ -23,6 +23,8 @@ typedef struct {
     float timer;         // Menyimpan waktu tunggu 3 detik
     float speed;         // Kecepatan naik/turun lift (pixel per detik)
     float speedMultiplier; // Pengali kecepatan untuk variasi (mis. saat orang masuk/keluar)
+    bool floorRequests[6]; 
+    int currentDir;
 } Elevator;
 
 extern Elevator myLift;

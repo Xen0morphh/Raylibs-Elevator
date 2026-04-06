@@ -181,13 +181,18 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
         int btnY = panelY + 60 + ((5 - i) * 25);
         Rectangle r = { btnX - 18, btnY - 18, 36, 36 };
         
-        bool isTarget = (lift->targetFloor == i);
-        Color btnColor = isTarget ? (Color){0, 160, 255, 255} : (Color){20, 40, 60, 255}; 
-        bool canPress = (lift->state == IDLE || lift->state == DOOR_OPEN);
-
-        if (DrawButtonInteractive(r, TextFormat("%d", i), btnColor, canPress)) {
-            lift->targetFloor = i;
-            if (lift->state == DOOR_OPEN || lift->state == DOOR_OPENING) { 
+        // [BARU] Tombol menyala Biru Terang jika lantainya masuk daftar antrian!
+        bool isRequested = lift->floorRequests[i]; 
+        Color btnColor = isRequested ? (Color){0, 160, 255, 255} : (Color){20, 40, 60, 255}; 
+        
+        // Tombol selalu bisa dipencet kapan pun untuk nambah antrian
+        if (DrawButtonInteractive(r, TextFormat("%d", i), btnColor, true)) {
+            
+            // MASUKKAN LANTAI KE DAFTAR ANTRIAN
+            lift->floorRequests[i] = true; 
+            
+            // Jika lift lagi buka pintu dan kita pencet lantai LAIN, paksa tutup pintunya
+            if ((lift->state == DOOR_OPEN || lift->state == DOOR_OPENING) && i != lift->currentFloor) { 
                 lift->timer = 0; 
                 lift->state = DOOR_CLOSING; 
             }
