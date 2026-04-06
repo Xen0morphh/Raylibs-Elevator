@@ -94,18 +94,79 @@ void DrawSimulationUI(Elevator* lift, Person* p) {
     //DrawRectCustom(0, sh - 40, sw, 40, LIGHTGRAY);
 
     // KOTAK INFO STATUS (Kiri Atas)
+    static int  displayFloor  = 1;   // Lantai yang sedang ditampilkan
+    static int  prevFloor     = 1;   // Lantai sebelumnya (yang sedang slide keluar)
+    static float animTimer    = 1.0f; // 0.0 = mulai animasi, 1.0 = selesai
+    static int  animDir       = 1;   // +1 = naik (angka masuk dari bawah), -1 = turun
+
+    float animSpeed = 8.0f; // Kecepatan animasi (semakin besar semakin cepat)
+
+    // Deteksi pergantian lantai → mulai animasi
+    if (lift->currentFloor != displayFloor) {
+        prevFloor    = displayFloor;
+        displayFloor = lift->currentFloor;
+        animDir      = (displayFloor > prevFloor) ? 1 : -1;
+        animTimer    = 0.0f; // Reset timer animasi
+    }
+
+
+    // Update timer animasi setiap frame
+    if (animTimer < 1.0f) {
+        animTimer += GetFrameTime() * animSpeed;
+        if (animTimer > 1.0f) animTimer = 1.0f;
+    }
+
+    // Easing: ease-out (decelerates near end)
+    float t = 1.0f - (1.0f - animTimer) * (1.0f - animTimer);
+
     int infoX = 20;
     int infoY = 20;
-    DrawRectangleRounded((Rectangle){infoX, infoY, 120, 80}, 0.2f, 10, (Color){ 10, 20, 35, 230 });
-    DrawRectangleRoundedLines((Rectangle){infoX, infoY, 120, 80}, 0.2f, 10, (Color){ 30, 80, 120, 255 });
+    int boxH  = 80;
+    int numFontSize = 30;
 
-    DrawText(TextFormat("%d", lift->currentFloor), infoX + 45, infoY + 15, 30, SKYBLUE);
+    DrawRectangleRounded((Rectangle){infoX, infoY, 120, boxH}, 0.2f, 10, (Color){ 10, 20, 35, 230 });
+    DrawRectangleRoundedLines((Rectangle){infoX, infoY, 120, boxH}, 0.2f, 10, (Color){ 30, 80, 120, 255 });
 
+    // Scissor (clip) agar angka tidak keluar kotak
+    BeginScissorMode(infoX + 5, infoY + 5, 110, 50);
+
+    // Anchor tengah angka di dalam kotak
+    int numCenterX = infoX + 45;
+    int numBaseY   = infoY + 15; // posisi Y akhir angka baru
+
+    // Offset gerak: animDir +1 (naik) → angka baru datang dari BAWAH (+), keluar ke ATAS (-)
+    //               animDir -1 (turun) → angka baru datang dari ATAS (-), keluar ke BAWAH (+)
+    int slideRange = 40; // jarak slide dalam pixel
+
+    // --- Angka LAMA (slide keluar) ---
+    if (animTimer < 1.0f) {
+        int oldOffsetY = (int)(t * slideRange * -animDir); // keluar ke arah berlawanan
+        unsigned char alpha = (unsigned char)((1.0f - t) * 255);
+        Color oldColor = (Color){ 135, 206, 235, alpha }; // SKYBLUE memudar
+        DrawText(TextFormat("%d", prevFloor),
+                 numCenterX, numBaseY + oldOffsetY,
+                 numFontSize, oldColor);
+    }
+
+    // --- Angka BARU (slide masuk) ---
+    {
+        int newOffsetY = (int)((1.0f - t) * slideRange * animDir); // masuk dari arah animDir
+        unsigned char alpha = (unsigned char)(t * 255);
+        Color newColor = (Color){ 135, 206, 235, alpha }; // SKYBLUE muncul
+        DrawText(TextFormat("%d", displayFloor),
+                 numCenterX, numBaseY + newOffsetY,
+                 numFontSize, newColor);
+    }
+
+    EndScissorMode();
+
+    // Teks Arah (NAIK/TURUN/DIAM) tetap di bawah angka
     const char* dirText = "DIAM -";
     Color dirColor = GRAY;
-    if (lift->state == MOVING_UP) { dirText = "NAIK ^"; dirColor = GREEN; }
+    if (lift->state == MOVING_UP)   { dirText = "NAIK ^";  dirColor = GREEN; }
     else if (lift->state == MOVING_DOWN) { dirText = "TURUN v"; dirColor = RED; }
     DrawText(dirText, infoX + 30, infoY + 55, 15, dirColor);
+
 
     // PANEL KONTROL IN-CAR (Kiri Bawah)
     int panelX = 20; 

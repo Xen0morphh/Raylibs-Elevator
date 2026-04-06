@@ -43,7 +43,7 @@ void DrawMechView(Elevator* lift) {
     DrawText("BUFFER", shaftCenter - 25, bufY + 30, 15, RED);
 
     // ==========================================
-    // KATROL & KABEL (POSISI TANGENSIAL DIPERBAIKI)
+    // KATROL & KABEL
     // ==========================================
     int pulleyY = 85; 
     int rLeft = 20;
