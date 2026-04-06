@@ -1,5 +1,6 @@
 #include "../header/Person.h"
 #include "../header/Lift.h"
+#include "../header/UI.h"
 #include <math.h>
 
 static Texture2D texWalkRight;
@@ -111,18 +112,77 @@ void UpdatePerson(Person *p, Elevator *lift) {
 
 void DrawPerson(Person *p) {
     Texture2D currentTex = (p->dir == FACING_RIGHT) ? texWalkRight : texWalkLeft;
-
-    // Guard: jika texture belum load, skip
     if (currentTex.id == 0) return;
 
-    float fWidth  = (float)currentTex.width / NUM_FRAMES_PER_SHEET;
-    float fHeight = (float)currentTex.height;
+    float fWidth  = (float)currentTex.width / NUM_FRAMES_PER_SHEET; // 24px
+    float fHeight = (float)currentTex.height;                        // 31px
+    float dstW    = fWidth  * SPRITE_SCALE;  // 48px
+    float dstH    = fHeight * SPRITE_SCALE;  // 62px
 
+    float px = p->position.x;
+    float py = p->position.y;
+
+    // ==========================================
+    // MODE WIREFRAME: Gambar stick figure
+    // ==========================================
+    if (GetWireframeMode()) {
+        Color wc = SKYBLUE; // Warna wireframe orang
+        float thick = 1.5f;
+
+        // Proporsi dari ukuran sprite yang sudah diukur (48x62):
+        float cx    = px + dstW * 0.5f;    // Tengah horizontal
+        float headR = dstW * 0.22f;        // Radius kepala ~10px
+        float headCY = py + headR + 2;     // Pusat kepala
+
+        float neckY  = headCY + headR;                  // Leher
+        float waistY = py + dstH * 0.58f;               // Pinggang
+        float footY  = py + dstH;                        // Kaki
+
+        // Arah lengan/kaki mengikuti animasi berjalan (oscillate per frame)
+        // currentFrame 0-3, buat efek ayun sederhana
+        float swing  = (p->currentFrame % 2 == 0) ? 1.0f : -1.0f;
+        if (p->dir == FACING_LEFT) swing = -swing;
+
+        // 1. Kepala (lingkaran)
+        DrawCircleLinesV((Vector2){cx, headCY}, headR, wc);
+
+        // 2. Badan (garis vertikal)
+        DrawLineEx((Vector2){cx, neckY}, (Vector2){cx, waistY}, thick, wc);
+
+        // 3. Lengan (dua garis, berayun berlawanan)
+        float armLen   = dstW * 0.38f;
+        float armMidY  = neckY + (waistY - neckY) * 0.3f;
+        // Lengan kanan
+        DrawLineEx((Vector2){cx, armMidY},
+                   (Vector2){cx + armLen * swing,  armMidY + armLen * 0.8f},
+                   thick, wc);
+        // Lengan kiri
+        DrawLineEx((Vector2){cx, armMidY},
+                   (Vector2){cx - armLen * swing,  armMidY + armLen * 0.8f},
+                   thick, wc);
+
+        // 4. Kaki (dua garis, berayun berlawanan)
+        float legSpan = dstW * 0.28f;
+        // Kaki kanan
+        DrawLineEx((Vector2){cx, waistY},
+                   (Vector2){cx + legSpan * swing,  footY},
+                   thick, wc);
+        // Kaki kiri
+        DrawLineEx((Vector2){cx, waistY},
+                   (Vector2){cx - legSpan * swing,  footY},
+                   thick, wc);
+
+        // 5. Bounding box (opsional, bisa dihapus kalau terlalu ramai)
+        DrawRectangleLinesEx((Rectangle){px, py, dstW, dstH}, 1, (Color){SKYBLUE.r, SKYBLUE.g, SKYBLUE.b, 60});
+
+        return; // Skip gambar texture
+    }
+
+    // ==========================================
+    // MODE NORMAL: Gambar sprite seperti biasa
+    // ==========================================
     Rectangle src = { p->currentFrame * fWidth, 0, fWidth, fHeight };
-    Rectangle dst = { p->position.x, p->position.y,
-                      fWidth  * SPRITE_SCALE,
-                      fHeight * SPRITE_SCALE };
-
+    Rectangle dst = { px, py, dstW, dstH };
     DrawTexturePro(currentTex, src, dst, (Vector2){0, 0}, 0.0f, WHITE);
 }
 
